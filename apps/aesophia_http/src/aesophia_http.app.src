@@ -1,0 +1,20 @@
+{application, aesophia_http,
+ [{description, "An OTP application"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {mod, { aesophia_http_app, []}},
+  {applications,
+   [kernel,
+    stdlib,
+    jsx,
+    enacl,
+    cowboy,
+    aesophia
+   ]},
+  {env,[{port,8080}]},
+  {modules, []},
+
+  {maintainers, []},
+  {licenses, ["Apache 2.0"]},
+  {links, []}
+ ]}.
