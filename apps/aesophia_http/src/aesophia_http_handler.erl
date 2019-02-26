@@ -93,40 +93,26 @@ handle_request('DecodeData', Req, _Context) ->
             end
     end;
 
+handle_request('GenerateACI', Req, _Context) ->
+    case Req of
+        #{'Contract' :=
+              #{ <<"code">> := Code
+               , <<"options">> := Options }} ->
+            case generate_aci(Code, Options) of
+                 {ok, ACI} ->
+                     {200, [], #{aci => aeser_api_encoder:encode(contract_bytearray, ACI)}}
+                 %% {error, ErrorMsg} ->
+                 %%     {403, [], #{reason => ErrorMsg}}
+             end;
+        _ -> {403, [], #{reason => <<"Bad request">>}}
+    end;
+
 handle_request('Api', _Req, #{ spec := Spec }) ->
     {200, [], Spec}.
 
-%% handle_post(Req0, Opts) ->
-%%     {ok,Body,Req1} = cowboy_req:read_body(Req0, #{}),
-%%     Path = cowboy_req:path(Req1),
-%%     %% io:format("Body: ~p\n", [Body]),
-%%     case Path of
-%% 	<<"/contracts/code/aci">> ->
-%% 	    #{<<"code">> := Code, <<"options">> := Options} =
-%% 		jsx:decode(Body, [return_maps]),
-%% 	    Headers = #{<<"content-type">> => <<"application/json">>},
-%% 	    ACI = aci_encode(Code, Options),
-%% 	    Req2 = cowboy_req:reply(200, Headers, ACI, Req1),
-%% 	    {stop,Req2,Opts};
-%% 	<<"/contracts/code/compile">> ->
-%% 	    #{<<"code">> := Code, <<"options">> := Options} =
-%% 		jsx:decode(Body, [return_maps]),
-%% 	    Headers = #{<<"content-type">> => <<"application/json">>},
-%% 	    Ret = compile_code(Code, Options),
-%% 	    Req2 = cowboy_req:reply(200, Headers, Ret, Req1),
-%% 	    {stop,Req2,Opts};
-%% 	_ ->
-%% 	    Req2 = cowboy_req:reply(400, #{}, <<"Bad command.">>, Req1),
-%% 	    {stop,Req2,Opts}
-%%     end.
-
-%% aci_encode(Contract, Options) -> ACI.
-
-aci_encode(Contract, _Options) ->
-    Enc = aeso_aci:encode(Contract),
-    Dec = aeso_aci:decode(Enc),
-    <<"{\"encoded-aci\":",Enc/binary,",",
-      "\"decoded-aci\":\"",Dec/binary,"\"}">>.
+generate_aci(_Contract, _Options) ->
+    %% TODO: Fill me in!
+    {ok, <<>>}.
 
 compile_contract(Contract, _Options) ->
     case aeso_compiler:from_string(binary_to_list(Contract), []) of

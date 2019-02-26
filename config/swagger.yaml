@@ -10,6 +10,31 @@ basePath: /
 schemes:
   - http
 paths:
+  /aci:
+    post:
+      operationId: 'GenerateACI'
+      description: 'Generate an Aeternity Contract Interface (ACI) for contract'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: contract code
+          required: true
+          schema:
+            $ref: '#/definitions/Contract'
+      responses:
+        '200':
+          description: 'ACI for contract'
+          schema:
+            $ref: '#/definitions/ACI'
+        '403':
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/Error'
+
   /compile:
     post:
       operationId: 'CompileContract'
@@ -103,6 +128,13 @@ definitions:
         type: string
     required:
       - reason
+  ACI:
+    type: object
+    properties:
+      aci:
+        $ref: '#/definitions/EncodedByteArray'
+    required:
+      - aci
   ByteCode:
     type: object
     properties:
