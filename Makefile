@@ -12,6 +12,11 @@ REBAR ?= rebar3
 all:
 	@($(REBAR) compile)
 
+.PHONY: test
+test:
+	@($(REBAR) eunit)
+	@($(REBAR) ct)
+
 swagger: config/swagger.yaml $(SWAGGER_CODEGEN_CLI) $(SWAGGER_ENDPOINTS_SPEC)
 	@$(SWAGGER_CODEGEN) generate -i $< -l erlang-server -o $(SWTEMP)
 	@echo "Swagger tempdir: $(SWTEMP)"

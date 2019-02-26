@@ -16,8 +16,8 @@
 
 %% test case exports
 %% external endpoints
--export([
-         identity_contract/1
+-export([ identity_contract/1
+        , legacy_decode_data/1
         ]).
 
 all() ->
@@ -28,7 +28,8 @@ all() ->
 groups() ->
     [
      {contracts, [],
-      [identity_contract
+      [ identity_contract
+      , legacy_decode_data
       ]}
     ].
 
@@ -71,6 +72,14 @@ identity_contract(_Config) ->
 
     ok.
 
+legacy_decode_data(_Config) ->
+    Int42 = <<"cb_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACr8s/aY">>,
+    Type  = <<"int">>,
+    ?assertMatch(#{ <<"type">> := <<"word">>, <<"value">> := 42},
+                 decode_data(Type, Int42)),
+
+    ok.
+
 %% Contract interface functions.
 
 compile_test_contract(Name) ->
@@ -82,6 +91,12 @@ compile_test_contract(Dir, Name) ->
     {ok, SophiaCode} = file:read_file(FileName),
     {ok, 200, #{<<"bytecode">> := Code}} = get_contract_bytecode(SophiaCode),
     Code.
+
+decode_data(Type, EncodedData) ->
+    {ok,200,#{<<"data">> := DecodedData}} =
+         get_contract_decode_data(#{'sophia-type' => Type,
+                                    data => EncodedData}),
+    DecodedData.
 
 %% ============================================================
 %% HTTP Requests
