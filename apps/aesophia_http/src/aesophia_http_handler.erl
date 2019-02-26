@@ -58,7 +58,7 @@ handle_request('CompileContract', Req, _Context) ->
                , <<"options">> := Options }} ->
             case compile_contract(Code, Options) of
                  {ok, ByteCode} ->
-                     {200, [], #{bytecode => aehttp_api_encoder:encode(contract_bytearray, ByteCode)}};
+                     {200, [], #{bytecode => aeser_api_encoder:encode(contract_bytearray, ByteCode)}};
                  {error, ErrorMsg} ->
                      {403, [], #{reason => ErrorMsg}}
              end;
@@ -111,19 +111,19 @@ compile_contract(Contract, _Options) ->
 %% From aect_sophia.erl for compile/2
 
 -define(SOPHIA_CONTRACT_VSN, 1).
+-define(COMPILER_SOPHIA_TAG, 70).
 
 serialize(#{byte_code := ByteCode, type_info := TypeInfo,
             contract_source := ContractString, compiler_version := _Version}) ->
     ContractBin = list_to_binary(ContractString),
-    Fields = [ {source_hash, aec_hash:hash(sophia_source_code, ContractBin)}
+    {ok, SourceHash} = eblake2:blake2b(32, ContractBin),
+    Fields = [ {source_hash, SourceHash}
              , {type_info, TypeInfo}
-             , {byte_code, ByteCode}
-             ],
-    aec_object_serialization:serialize(compiler_sophia,
-                                       ?SOPHIA_CONTRACT_VSN,
-                                       serialization_template(?SOPHIA_CONTRACT_VSN),
-                                       Fields
-                                      ).
+             , {byte_code, ByteCode} ],
+    aeserialization:serialize(?COMPILER_SOPHIA_TAG,
+                              ?SOPHIA_CONTRACT_VSN,
+                              serialization_template(?SOPHIA_CONTRACT_VSN),
+                              Fields).
 
 serialization_template(?SOPHIA_CONTRACT_VSN) ->
     [ {source_hash, binary}

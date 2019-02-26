@@ -7,7 +7,6 @@
    [kernel,
     stdlib,
     jsx,
-    enacl,
     cowboy,
     aesophia
    ]},

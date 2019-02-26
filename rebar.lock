@@ -3,6 +3,10 @@
   {git,"https://github.com/aeternity/aebytecode.git",
        {ref,"c5a9878bd9c56f623fe2caad30a1ead3dac1f391"}},
   1},
+ {<<"aeserialization">>,
+  {git,"https://github.com/aeternity/aeserialization.git",
+       {ref,"179dd417b3c25c89d3877be88821858f91cd443c"}},
+  0},
  {<<"aesophia">>,
   {git,"https://github.com/aeternity/aesophia.git",
        {ref,"bcdf311096c8d1225a4fdaf3c5e9a0240b297185"}},
@@ -10,7 +14,7 @@
  {<<"base58">>,
   {git,"https://github.com/aeternity/erl-base58.git",
        {ref,"60a335668a60328a29f9731b67c4a0e9e3d50ab6"}},
-  0},
+  1},
  {<<"cowboy">>,
   {git,"https://github.com/ninenines/cowboy.git",
        {ref,"8d49ae3dda5b4274e55d2f4e5a5b4da0515b5a10"}},
@@ -19,10 +23,11 @@
   {git,"https://github.com/ninenines/cowlib",
        {ref,"3ef5b48a028bb66f82b452c98ae515903096641c"}},
   1},
+ {<<"eblake2">>,{pkg,<<"eblake2">>,<<"1.0.0">>},0},
  {<<"enacl">>,
   {git,"https://github.com/aeternity/enacl.git",
        {ref,"26180f42c0b3a450905d2efd8bc7fd5fd9cece75"}},
-  0},
+  2},
  {<<"getopt">>,{pkg,<<"getopt">>,<<"1.0.1">>},1},
  {<<"jesse">>,
   {git,"https://github.com/for-GET/jesse.git",
@@ -42,5 +47,6 @@
   1}]}.
 [
 {pkg_hash,[
+ {<<"eblake2">>, <<"EC8AD20E438AAB3F2E8D5D118C366A0754219195F8A0F536587440F8F9BCF2EF">>},
  {<<"getopt">>, <<"C73A9FA687B217F2FF79F68A3B637711BB1936E712B521D8CE466B29CBF7808A">>}]}
 ].
