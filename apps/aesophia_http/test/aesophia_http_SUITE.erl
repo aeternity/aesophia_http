@@ -18,6 +18,7 @@
 %% external endpoints
 -export([ identity_contract/1
         , legacy_decode_data/1
+        , encode_calldata/1
         ]).
 
 all() ->
@@ -30,6 +31,7 @@ groups() ->
      {contracts, [],
       [ identity_contract
       , legacy_decode_data
+      , encode_calldata
       ]}
     ].
 
@@ -80,6 +82,21 @@ legacy_decode_data(_Config) ->
 
     ok.
 
+encode_calldata(_Config) ->
+    Src = fun(Ts) ->
+            lists:flatten(
+                ["contract Dummy =\n",
+                 "  type an_alias('a) = (string, 'a)\n"
+                 "  record r = {x : an_alias(int), y : variant}\n"
+                 "  datatype variant = Red | Blue(map(string, int))\n"
+                 "  function foo : (", string:join(Ts, ", "), ") => int\n" ])
+          end,
+
+    encode_calldata(Src(["int", "string"]), "foo", ["42", "\"foo\""]),
+    encode_calldata(Src(["variant", "r"]), "foo", ["Blue({[\"a\"] = 4})", "{x = (\"b\", 5), y = Red}"]),
+
+    ok.
+
 %% Contract interface functions.
 
 compile_test_contract(Name) ->
@@ -93,10 +110,17 @@ compile_test_contract(Dir, Name) ->
     Code.
 
 decode_data(Type, EncodedData) ->
-    {ok,200,#{<<"data">> := DecodedData}} =
+    {ok, 200, #{<<"data">> := DecodedData}} =
          get_contract_decode_data(#{'sophia-type' => Type,
                                     data => EncodedData}),
     DecodedData.
+
+encode_calldata(Src, Fun, Args) ->
+    {ok, 200, #{<<"calldata">> := Data}} =
+         get_encode_calldata(#{source => list_to_binary(Src),
+                               function => list_to_binary(Fun),
+                               arguments => lists:map(fun list_to_binary/1, Args)}),
+    Data.
 
 %% ============================================================
 %% HTTP Requests
@@ -111,6 +135,10 @@ get_contract_bytecode(SourceCode) ->
 get_contract_decode_data(Request) ->
     Host = internal_address(),
     http_request(Host, post, "decode-data", Request).
+
+get_encode_calldata(Request) ->
+    Host = internal_address(),
+    http_request(Host, post, "encode-calldata", Request).
 
 %% ============================================================
 %% private functions

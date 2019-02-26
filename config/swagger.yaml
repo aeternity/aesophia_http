@@ -58,6 +58,30 @@ paths:
           description: Invalid data
           schema:
             $ref: '#/definitions/Error'
+  /encode-calldata:
+    post:
+      operationId: 'EncodeCalldata'
+      description: 'Encode Sophia function call according to sophia ABI.'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: 'Sophia function call - contract code + function name + arguments'
+          required: true
+          schema:
+            $ref: '#/definitions/FunctionCallInput'
+      responses:
+        '200':
+          description: Binary ecoded calldata
+          schema:
+            $ref: '#/definitions/Calldata'
+        '403':
+          description: Invalid contract
+          schema:
+            $ref: '#/definitions/Error'
 
 definitions:
   Contract:
@@ -81,7 +105,7 @@ definitions:
     type: object
     properties:
       bytecode:
-        type: string
+        $ref: '#/definitions/EncodedByteArray'
     required:
       - bytecode
   SophiaBinaryData:
@@ -101,4 +125,32 @@ definitions:
         type: object
     required:
       - data
+  FunctionCallInput:
+    type: object
+    properties:
+      source:
+        description: '(Possibly partial) Sophia contract code'
+        type: string
+      function:
+        description: 'Name of function to call'
+        type: string
+      arguments:
+        description: 'Array of function call arguments'
+        type: array
+        items:
+          type: string
+    required:
+      - source
+      - function
+      - arguments
+  Calldata:
+    type: object
+    properties:
+      calldata:
+        $ref: '#/definitions/EncodedByteArray'
+    required:
+      - calldata
+  EncodedByteArray:
+    description: 'Prefixed (cb_) Base64Check encoded byte array'
+    type: string
 

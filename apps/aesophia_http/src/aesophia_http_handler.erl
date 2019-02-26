@@ -65,6 +65,22 @@ handle_request('CompileContract', Req, _Context) ->
         _ -> {403, [], #{reason => <<"Bad request">>}}
     end;
 
+handle_request('EncodeCalldata', Req, _Context) ->
+    case Req of
+        #{'FunctionCallInput' :=
+              #{ <<"source">>    := ContractCode
+               , <<"function">>  := FunctionName
+               , <<"arguments">> := Arguments
+               } = Input} ->
+            case encode_calldata(ContractCode, FunctionName, Arguments) of
+                {ok, Result} ->
+                    {200, [], #{calldata => Result}};
+                {error, ErrorMsg} ->
+                    {403, [], #{reason => ErrorMsg}}
+            end;
+        _ -> {403, [], #{reason => <<"Bad request">>}}
+    end;
+
 handle_request('DecodeData', Req, _Context) ->
     case Req of
         #{'SophiaBinaryData' :=
@@ -73,7 +89,7 @@ handle_request('DecodeData', Req, _Context) ->
                }} ->
             case decode_data(Type, Data) of
                 {ok, Result} ->
-                    {200, [], #{ data => Result}};
+                    {200, [], #{data => Result}};
                 {error, ErrorMsg} ->
                     {400, [], #{reason => ErrorMsg}}
             end
@@ -118,6 +134,16 @@ compile_contract(Contract, _Options) ->
     case aeso_compiler:from_string(binary_to_list(Contract), []) of
         {ok, Map} ->
             {ok, serialize(Map)};
+        Err = {error, _} ->
+            Err
+    end.
+
+encode_calldata(Source, Function, Arguments) ->
+    case aeso_compiler:create_calldata(binary_to_list(Source),
+                                      binary_to_list(Function),
+                                      lists:map(fun binary_to_list/1, Arguments)) of
+        {ok, Calldata, _VMArgTypes, _VMRetType} ->
+            {ok, aeser_api_encoder:encode(contract_bytearray, Calldata)};
         Err = {error, _} ->
             Err
     end.
