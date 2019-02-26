@@ -6,7 +6,10 @@
   {applications,
    [kernel,
     stdlib,
+    eblake2,
+    aeserialization,
     jsx,
+    jesse,
     cowboy,
     aesophia
    ]},

@@ -34,6 +34,7 @@ paths:
           description: Invalid contract
           schema:
             $ref: '#/definitions/Error'
+
   /decode-data:
     post:
       operationId: 'DecodeData'
@@ -58,6 +59,7 @@ paths:
           description: Invalid data
           schema:
             $ref: '#/definitions/Error'
+
   /encode-calldata:
     post:
       operationId: 'EncodeCalldata'

@@ -5,8 +5,6 @@
 	 allowed_methods/2,content_types_accepted/2
 	]).
 
--compile(export_all).
-
 -record(state, { spec :: jsx:json_text()
                , validator :: jesse_state:state()
                , operation_id :: atom() }).
@@ -71,7 +69,7 @@ handle_request('EncodeCalldata', Req, _Context) ->
               #{ <<"source">>    := ContractCode
                , <<"function">>  := FunctionName
                , <<"arguments">> := Arguments
-               } = Input} ->
+               }} ->
             case encode_calldata(ContractCode, FunctionName, Arguments) of
                 {ok, Result} ->
                     {200, [], #{calldata => Result}};
@@ -140,8 +138,8 @@ compile_contract(Contract, _Options) ->
 
 encode_calldata(Source, Function, Arguments) ->
     case aeso_compiler:create_calldata(binary_to_list(Source),
-                                      binary_to_list(Function),
-                                      lists:map(fun binary_to_list/1, Arguments)) of
+                                       binary_to_list(Function),
+                                       lists:map(fun binary_to_list/1, Arguments)) of
         {ok, Calldata, _VMArgTypes, _VMRetType} ->
             {ok, aeser_api_encoder:encode(contract_bytearray, Calldata)};
         Err = {error, _} ->
@@ -211,9 +209,7 @@ serialization_template(?SOPHIA_CONTRACT_VSN) ->
     , {byte_code, binary}].
 
 to_headers(Headers) when is_list(Headers) ->
-    maps:from_list(Headers);
-to_headers(Headers) ->
-    Headers.
+    maps:from_list(Headers).
 
 to_error({Reason, Name, Info}) ->
     #{ reason => Reason,

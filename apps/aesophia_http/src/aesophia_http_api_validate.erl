@@ -57,7 +57,7 @@ response(OperationId, Method0, Code, Response, Validator) ->
     Req :: cowboy_req:req(),
     Validator :: jesse_state:state()
     ) ->
-    {ok, Model :: #{}, cowboy_req:req()}
+    {ok, Model :: map(), cowboy_req:req()}
     | {error, Reason :: any(), cowboy_req:req()}.
 
 request(OperationId, Method0, Req, Validator) ->
