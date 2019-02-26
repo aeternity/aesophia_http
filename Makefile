@@ -9,15 +9,17 @@ MAKE := make
 
 REBAR ?= rebar3
 
-all:
+all: swagger
 	@($(REBAR) compile)
 
 .PHONY: test
-test:
+test: swagger
 	@($(REBAR) eunit)
 	@($(REBAR) ct)
 
-swagger: config/swagger.yaml $(SWAGGER_CODEGEN_CLI) $(SWAGGER_ENDPOINTS_SPEC)
+swagger: $(HTTP_APP)/priv/swagger.json $(SWAGGER_CODEGEN_CLI) $(SWAGGER_ENDPOINTS_SPEC)
+
+$(HTTP_APP)/priv/swagger.json: config/swagger.yaml
 	@$(SWAGGER_CODEGEN) generate -i $< -l erlang-server -o $(SWTEMP)
 	@echo "Swagger tempdir: $(SWTEMP)"
 	@( mkdir -p $(HTTP_APP)/priv && cp $(SWTEMP)/priv/swagger.json $(HTTP_APP)/priv/; )
@@ -27,7 +29,7 @@ swagger: config/swagger.yaml $(SWAGGER_CODEGEN_CLI) $(SWAGGER_ENDPOINTS_SPEC)
 $(SWAGGER_CODEGEN_CLI):
 	curl -fsS --create-dirs -o $@ http://central.maven.org/maven2/io/swagger/swagger-codegen-cli/$(SWAGGER_CODEGEN_CLI_V)/swagger-codegen-cli-$(SWAGGER_CODEGEN_CLI_V).jar
 
-$(SWAGGER_ENDPOINTS_SPEC):
+$(SWAGGER_ENDPOINTS_SPEC): config/swagger.yaml
 	$(REBAR) swagger_endpoints
 
 SWAGGER_UI_GIT = https://github.com/swagger-api/swagger-ui.git
