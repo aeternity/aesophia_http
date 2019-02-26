@@ -1,0 +1,63 @@
+swagger: '2.0'
+info:
+  description: 'This is the [Aeternity](https://www.aeternity.com/) compiler API.'
+  version: 2.0.0
+  title: Aeternity node
+  termsOfService: 'https://www.aeternity.com/terms/'
+  contact:
+    email: apiteam@aeternity.com
+basePath: /
+schemes:
+  - http
+paths:
+  /compile:
+    post:
+      operationId: 'CompileContract'
+      description: 'Compile a sophia contract from source and return byte code'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: contract code
+          required: true
+          schema:
+            $ref: '#/definitions/Contract'
+      responses:
+        '200':
+          description: Byte code response
+          schema:
+            $ref: '#/definitions/ByteCode'
+        '403':
+          description: Invalid contract
+          schema:
+            $ref: '#/definitions/Error'
+
+definitions:
+  Contract:
+    type: object
+    properties:
+      code:
+        type: string
+      options:
+        type: string
+    required:
+      - code
+      - options
+  Error:
+    type: object
+    properties:
+      reason:
+        type: string
+    required:
+      - reason
+  ByteCode:
+    type: object
+    properties:
+      bytecode:
+        type: string
+    required:
+      - bytecode
+
