@@ -12,8 +12,8 @@
                , operation_id :: atom() }).
 
 init(Req, OperationId) ->
-    JsonSpec = aehttp_api_validate:json_spec(),
-    Validator = aehttp_api_validate:validator(JsonSpec),
+    JsonSpec = aesophia_http_api_validate:json_spec(),
+    Validator = aesophia_http_api_validate:validator(JsonSpec),
     State = #state{ spec = JsonSpec,
                     validator = Validator,
                     operation_id = OperationId },
