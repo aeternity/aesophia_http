@@ -17,7 +17,7 @@ test: swagger
 	@($(REBAR) eunit)
 	@($(REBAR) ct)
 
-swagger: $(HTTP_APP)/priv/swagger.json $(SWAGGER_CODEGEN_CLI) $(SWAGGER_ENDPOINTS_SPEC)
+swagger: $(SWAGGER_CODEGEN_CLI) $(HTTP_APP)/priv/swagger.json $(SWAGGER_ENDPOINTS_SPEC)
 
 $(HTTP_APP)/priv/swagger.json: config/swagger.yaml
 	@$(SWAGGER_CODEGEN) generate -i $< -l erlang-server -o $(SWTEMP)
