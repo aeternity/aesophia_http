@@ -15,7 +15,7 @@
 %%====================================================================
 
 start(_StartType, _StartArgs) ->
-    Paths = [{"/[...]", aesophia_http_handler, []}],
+    Paths = get_paths(),
     {ok,Port} = application:get_env(port),      %Get the port
     io:format("Port: ~p\n", [Port]),
     Dispatch = cowboy_router:compile([
@@ -32,3 +32,14 @@ stop(_State) ->
 %%====================================================================
 %% Internal functions
 %%====================================================================
+
+get_paths() ->
+    [{path(Path), aesophia_http_handler, OperationId}
+     || {OperationId, Spec} <- maps:to_list(endpoints:operations()),
+        {_Method, #{path := Path}} <- maps:to_list(Spec)
+    ] ++ [{<<"/api">>, aesophia_http_handler, 'Api'}].
+
+path(Path0) ->
+    Path1 = binary:replace(Path0, <<"}">>, <<"">>, [global]),
+    binary:replace(Path1, <<"{">>, <<":">>, [global]).
+

@@ -1,0 +1,190 @@
+swagger: '2.0'
+info:
+  description: 'This is the [Aeternity](https://www.aeternity.com/) compiler API.'
+  version: 2.0.0
+  title: Aeternity node
+  termsOfService: 'https://www.aeternity.com/terms/'
+  contact:
+    email: apiteam@aeternity.com
+basePath: /
+schemes:
+  - http
+paths:
+  /aci:
+    post:
+      operationId: 'GenerateACI'
+      description: 'Generate an Aeternity Contract Interface (ACI) for contract'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: contract code
+          required: true
+          schema:
+            $ref: '#/definitions/Contract'
+      responses:
+        '200':
+          description: 'ACI for contract'
+          schema:
+            $ref: '#/definitions/ACI'
+        '403':
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/Error'
+
+  /compile:
+    post:
+      operationId: 'CompileContract'
+      description: 'Compile a sophia contract from source and return byte code'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: contract code
+          required: true
+          schema:
+            $ref: '#/definitions/Contract'
+      responses:
+        '200':
+          description: Byte code response
+          schema:
+            $ref: '#/definitions/ByteCode'
+        '403':
+          description: Invalid contract
+          schema:
+            $ref: '#/definitions/Error'
+
+  /decode-data:
+    post:
+      operationId: 'DecodeData'
+      description: 'Decode data as retuned by a contract call. - Legacy decoding'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Binary data in Sophia ABI format
+          required: true
+          schema:
+            $ref: '#/definitions/SophiaBinaryData'
+      responses:
+        '200':
+          description: Json encoded data
+          schema:
+            $ref: '#/definitions/SophiaJsonData'
+        '400':
+          description: Invalid data
+          schema:
+            $ref: '#/definitions/Error'
+
+  /encode-calldata:
+    post:
+      operationId: 'EncodeCalldata'
+      description: 'Encode Sophia function call according to sophia ABI.'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: 'Sophia function call - contract code + function name + arguments'
+          required: true
+          schema:
+            $ref: '#/definitions/FunctionCallInput'
+      responses:
+        '200':
+          description: Binary ecoded calldata
+          schema:
+            $ref: '#/definitions/Calldata'
+        '403':
+          description: Invalid contract
+          schema:
+            $ref: '#/definitions/Error'
+
+definitions:
+  Contract:
+    type: object
+    properties:
+      code:
+        type: string
+      options:
+        type: string
+    required:
+      - code
+      - options
+  Error:
+    type: object
+    properties:
+      reason:
+        type: string
+    required:
+      - reason
+  ACI:
+    type: object
+    properties:
+      aci:
+        $ref: '#/definitions/EncodedByteArray'
+    required:
+      - aci
+  ByteCode:
+    type: object
+    properties:
+      bytecode:
+        $ref: '#/definitions/EncodedByteArray'
+    required:
+      - bytecode
+  SophiaBinaryData:
+    type: object
+    properties:
+      sophia-type:
+        type: string
+      data:
+        type: string
+    required:
+      - sophia-type
+      - data
+  SophiaJsonData:
+    type: object
+    properties:
+      data:
+        type: object
+    required:
+      - data
+  FunctionCallInput:
+    type: object
+    properties:
+      source:
+        description: '(Possibly partial) Sophia contract code'
+        type: string
+      function:
+        description: 'Name of function to call'
+        type: string
+      arguments:
+        description: 'Array of function call arguments'
+        type: array
+        items:
+          type: string
+    required:
+      - source
+      - function
+      - arguments
+  Calldata:
+    type: object
+    properties:
+      calldata:
+        $ref: '#/definitions/EncodedByteArray'
+    required:
+      - calldata
+  EncodedByteArray:
+    description: 'Prefixed (cb_) Base64Check encoded byte array'
+    type: string
+
