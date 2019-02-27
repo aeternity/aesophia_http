@@ -190,16 +190,17 @@ parse_type(BinaryString) ->
 %% -- Helper functions -------------------------------------------------------
 
 %% -- Contract serialization
--define(SOPHIA_CONTRACT_VSN, 1).
+-define(SOPHIA_CONTRACT_VSN, 2).
 -define(COMPILER_SOPHIA_TAG, compiler_sophia).
 
 serialize(#{byte_code := ByteCode, type_info := TypeInfo,
-            contract_source := ContractString, compiler_version := _Version}) ->
-    ContractBin = list_to_binary(ContractString),
+            contract_source := ContractString, compiler_version := Version}) ->
+    ContractBin      = list_to_binary(ContractString),
     {ok, SourceHash} = eblake2:blake2b(32, ContractBin),
     Fields = [ {source_hash, SourceHash}
              , {type_info, TypeInfo}
-             , {byte_code, ByteCode} ],
+             , {byte_code, ByteCode}
+             , {compiler_version, Version} ],
     aeser_chain_objects:serialize(?COMPILER_SOPHIA_TAG,
                                   ?SOPHIA_CONTRACT_VSN,
                                   serialization_template(?SOPHIA_CONTRACT_VSN),
@@ -208,7 +209,8 @@ serialize(#{byte_code := ByteCode, type_info := TypeInfo,
 serialization_template(?SOPHIA_CONTRACT_VSN) ->
     [ {source_hash, binary}
     , {type_info, [{binary, binary, binary, binary}]} %% {type hash, name, arg type, out type}
-    , {byte_code, binary}].
+    , {byte_code, binary}
+    , {compiler_version, binary} ].
 
 to_headers(Headers) when is_list(Headers) ->
     maps:from_list(Headers).
