@@ -175,7 +175,7 @@ parse_type(BinaryString) ->
 
 %% -- Contract serialization
 -define(SOPHIA_CONTRACT_VSN, 1).
--define(COMPILER_SOPHIA_TAG, 70).
+-define(COMPILER_SOPHIA_TAG, compiler_sophia).
 
 serialize(#{byte_code := ByteCode, type_info := TypeInfo,
             contract_source := ContractString, compiler_version := _Version}) ->
@@ -184,10 +184,10 @@ serialize(#{byte_code := ByteCode, type_info := TypeInfo,
     Fields = [ {source_hash, SourceHash}
              , {type_info, TypeInfo}
              , {byte_code, ByteCode} ],
-    aeserialization:serialize(?COMPILER_SOPHIA_TAG,
-                              ?SOPHIA_CONTRACT_VSN,
-                              serialization_template(?SOPHIA_CONTRACT_VSN),
-                              Fields).
+    aeser_chain_objects:serialize(?COMPILER_SOPHIA_TAG,
+                                  ?SOPHIA_CONTRACT_VSN,
+                                  serialization_template(?SOPHIA_CONTRACT_VSN),
+                                  Fields).
 
 serialization_template(?SOPHIA_CONTRACT_VSN) ->
     [ {source_hash, binary}
