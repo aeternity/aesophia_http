@@ -17,6 +17,7 @@
 %% test case exports
 %% external endpoints
 -export([ identity_contract/1
+        , include_contract/1
         , legacy_decode_data/1
         , encode_calldata/1
         ]).
@@ -30,6 +31,7 @@ groups() ->
     [
      {contracts, [],
       [ identity_contract
+      , include_contract
       , legacy_decode_data
       , encode_calldata
       ]}
@@ -62,15 +64,24 @@ end_per_testcase(_Case, _Config) ->
 %% Test cases
 %% ============================================================
 
-%% identity_contract(Config)
-%%  Create the Identity contract by account acc_c and call by accounts
-%%  acc_c and acc_d. Encode create and call data in server.
-
 identity_contract(_Config) ->
-    %% Node = proplists:get_value(node_name, Config),
-
     %% Compile test contract "identity.aes"
     _Code = compile_test_contract("identity"),
+
+    ok.
+
+include_contract(_Config) ->
+    Dir = contract_dir(),
+    Files = ["included.aes", "../contracts/included2.aes"],
+    ExplicitFileSystem =
+        maps:from_list(
+            [ begin
+                {ok, F} = file:read_file(filename:join(Dir, Name)),
+                {list_to_binary(Name), F}
+              end || Name <- Files ]),
+    Opts = #{file_system => ExplicitFileSystem},
+
+    _Code = compile_test_contract(Dir, "include", Opts),
 
     ok.
 
@@ -98,15 +109,20 @@ encode_calldata(_Config) ->
     ok.
 
 %% Contract interface functions.
+contract_dir() ->
+    filename:join(code:lib_dir(aesophia_http), "../../extras/test/contracts").
 
 compile_test_contract(Name) ->
-    Dir = filename:join(code:lib_dir(aesophia_http), "../../extras/test/contracts"),
+    Dir = contract_dir(),
     compile_test_contract(Dir, Name).
 
 compile_test_contract(Dir, Name) ->
+    compile_test_contract(Dir, Name, #{}).
+
+compile_test_contract(Dir, Name, Opts) ->
     FileName = filename:join(Dir, Name ++ ".aes"),
     {ok, SophiaCode} = file:read_file(FileName),
-    {ok, 200, #{<<"bytecode">> := Code}} = get_contract_bytecode(SophiaCode),
+    {ok, 200, #{<<"bytecode">> := Code}} = get_contract_bytecode(SophiaCode, Opts),
     Code.
 
 decode_data(Type, EncodedData) ->
@@ -127,10 +143,10 @@ encode_calldata(Src, Fun, Args) ->
 %% Note that some are internal and some are external!
 %% ============================================================
 
-get_contract_bytecode(SourceCode) ->
+get_contract_bytecode(SourceCode, Opts) ->
     Host = internal_address(),
     http_request(Host, post, "compile",
-                 #{ <<"code">> => SourceCode, <<"options">> => <<>> }).
+                 #{ <<"code">> => SourceCode, <<"options">> => Opts }).
 
 get_contract_decode_data(Request) ->
     Host = internal_address(),

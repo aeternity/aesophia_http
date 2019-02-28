@@ -114,13 +114,19 @@ generate_aci(_Contract, _Options) ->
     %% TODO: Fill me in!
     {ok, <<>>}.
 
-compile_contract(Contract, _Options) ->
-    case aeso_compiler:from_string(binary_to_list(Contract), []) of
+compile_contract(Contract, Options) ->
+    Opts = compile_options(Options),
+    case aeso_compiler:from_string(binary_to_list(Contract), Opts) of
         {ok, Map} ->
             {ok, serialize(Map)};
         Err = {error, _} ->
             Err
     end.
+
+compile_options(Options) ->
+    Map = maps:get(<<"file_system">>, Options, #{}),
+    Map1 = maps:from_list([{binary_to_list(N), F} || {N, F} <- maps:to_list(Map)]),
+    [{include, {explicit_files, Map1}}].
 
 encode_calldata(Source, Function, Arguments) ->
     case aeso_compiler:create_calldata(binary_to_list(Source),

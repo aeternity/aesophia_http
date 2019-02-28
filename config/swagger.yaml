@@ -117,10 +117,16 @@ definitions:
       code:
         type: string
       options:
-        type: string
+        $ref: '#/definitions/CompileOpts'
     required:
       - code
       - options
+  CompileOpts:
+    type: object
+    properties:
+      file_system:
+        description: 'An explicit file system, mapping file names to file content'
+        type: object
   Error:
     type: object
     properties:
