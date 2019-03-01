@@ -89,7 +89,7 @@ handle_request('DecodeData', Req, _Context) ->
                 {ok, Result} ->
                     {200, [], #{data => Result}};
                 {error, ErrorMsg} ->
-                    {400, [], #{reason => ErrorMsg}}
+                    {403, [], #{reason => ErrorMsg}}
             end
     end;
 
