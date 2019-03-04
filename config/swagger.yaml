@@ -102,11 +102,27 @@ paths:
             $ref: '#/definitions/FunctionCallInput'
       responses:
         '200':
-          description: Binary ecoded calldata
+          description: Binary encoded calldata
           schema:
             $ref: '#/definitions/Calldata'
         '403':
           description: Invalid contract
+          schema:
+            $ref: '#/definitions/Error'
+
+  /version:
+    get:
+      operationId: 'Version'
+      description: 'Get the version of the underlying Sophia compiler version'
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: 'Sophia compiler version'
+          schema:
+            $ref: '#/definitions/CompilerVersion'
+        '403':
+          description: 'Error'
           schema:
             $ref: '#/definitions/Error'
 
@@ -130,6 +146,14 @@ definitions:
       src_file:
         description: 'Name of contract source file - only used in error messages'
         type: string
+  CompilerVersion:
+    type: object
+    properties:
+      version:
+        description: 'Sophia compiler version'
+        type: string
+    required:
+      - version
   Error:
     type: object
     properties:

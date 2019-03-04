@@ -107,6 +107,14 @@ handle_request('GenerateACI', Req, _Context) ->
         _ -> {403, [], #{reason => <<"Bad request">>}}
     end;
 
+handle_request('Version', _Req, _Context) ->
+    case aeso_compiler:version() of
+        {ok, Vsn} ->
+            {200, [], #{version => Vsn}};
+        _ ->
+            {403, [], #{reason => <<"Internal error: Could not find the version!?">>}}
+    end;
+
 handle_request('Api', _Req, #{ spec := Spec }) ->
     {200, [], Spec}.
 
