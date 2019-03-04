@@ -77,11 +77,11 @@ identity_contract(_Config) ->
     ok.
 
 identity_aci(_Config) ->
-    {EACI, DACI} = create_aci("identity"),
+    #{<<"json">> := ACI, <<"string">> := Prototype} = create_aci("identity"),
 
-    ?assertMatch(<<"contract Identity =\n  function main : (int) => int\n">>, DACI),
+    ?assertMatch(<<"contract Identity =\n  function main : (int) => int\n">>, Prototype),
 
-    ?assertMatch(#{<<"contract">> := _C}, EACI),
+    ?assertMatch(#{<<"contract">> := _C}, ACI),
 
     ok.
 
@@ -173,9 +173,8 @@ create_aci(Dir, Name) ->
 create_aci(Dir, Name, Opts) ->
     FileName = filename:join(Dir, Name ++ ".aes"),
     {ok, SophiaCode} = file:read_file(FileName),
-    {ok, 200, #{<<"decoded_aci">> := DACI,
-                <<"encoded_aci">> := EACI}} = get_aci(SophiaCode, Opts),
-    {EACI, DACI}.
+    {ok, 200, ACI = #{}} = get_aci(SophiaCode, Opts),
+    ACI.
 
 decode_data(Type, EncodedData) ->
     {ok, 200, #{<<"data">> := DecodedData}} =

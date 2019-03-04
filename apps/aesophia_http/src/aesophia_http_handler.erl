@@ -101,8 +101,8 @@ handle_request('GenerateACI', Req, _Context) ->
             case generate_aci(Code, Options) of
                  {ok, EncACI, DecACI} ->
                      {200, [],
-		      #{encoded_aci => jsx:decode(EncACI),
-			decoded_aci => DecACI}};
+		      #{json   => jsx:decode(EncACI),
+			string => DecACI}};
                  {error, ErrorMsg} ->
                      {403, [], #{reason => ErrorMsg}}
              end;
