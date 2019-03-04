@@ -140,7 +140,7 @@ definitions:
       decoded_aci:
         type: string
       encoded_aci:
-        type: string
+        type: object
     required:
       - decoded_aci
       - encoded_aci
