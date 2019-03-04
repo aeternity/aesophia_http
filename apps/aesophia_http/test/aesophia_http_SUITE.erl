@@ -20,6 +20,7 @@
         , include_contract/1
         , legacy_decode_data/1
         , encode_calldata/1
+        , get_version/1
         ]).
 
 all() ->
@@ -34,6 +35,7 @@ groups() ->
       , include_contract
       , legacy_decode_data
       , encode_calldata
+      , get_version
       ]}
     ].
 
@@ -108,6 +110,13 @@ encode_calldata(_Config) ->
 
     ok.
 
+get_version(_Config) ->
+    {ok, 200, #{<<"version">> := Vsn}} = get_version(),
+    ?assertMatch({X, X}, {{ok, Vsn}, aeso_compiler:version()}),
+
+    ok.
+
+
 %% Contract interface functions.
 contract_dir() ->
     filename:join(code:lib_dir(aesophia_http), "../../extras/test/contracts").
@@ -155,6 +164,10 @@ get_contract_decode_data(Request) ->
 get_encode_calldata(Request) ->
     Host = internal_address(),
     http_request(Host, post, "encode-calldata", Request).
+
+get_version() ->
+    Host = internal_address(),
+    http_request(Host, get, "version", []).
 
 %% ============================================================
 %% private functions
