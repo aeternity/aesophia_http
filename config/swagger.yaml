@@ -29,7 +29,7 @@ paths:
         '200':
           description: 'ACI for contract'
           schema:
-            $ref: '#/definitions/ACIJsonData'
+            $ref: '#/definitions/ACI'
         '403':
           description: Invalid input
           schema:
@@ -134,23 +134,16 @@ definitions:
         type: string
     required:
       - reason
-  ACIJsonData:
-    type: object
-    properties:
-      decoded_aci:
-        type: string
-      encoded_aci:
-        type: object
-    required:
-      - decoded_aci
-      - encoded_aci
   ACI:
     type: object
     properties:
-      aci:
-        $ref: '#/definitions/EncodedByteArray'
+      json:
+        type: object
+      string:
+        type: string
     required:
-      - aci
+      - json
+      - string
   ByteCode:
     type: object
     properties:
