@@ -126,7 +126,9 @@ compile_contract(Contract, Options) ->
 compile_options(Options) ->
     Map = maps:get(<<"file_system">>, Options, #{}),
     Map1 = maps:from_list([{binary_to_list(N), F} || {N, F} <- maps:to_list(Map)]),
-    [{include, {explicit_files, Map1}}].
+    SrcFile = maps:get(<<"src_file">>, Options, no_file),
+    [{include, {explicit_files, Map1}}]
+      ++ [ {src_file, binary_to_list(SrcFile)} || SrcFile /= no_file ].
 
 encode_calldata(Source, Function, Arguments) ->
     case aeso_compiler:create_calldata(binary_to_list(Source),

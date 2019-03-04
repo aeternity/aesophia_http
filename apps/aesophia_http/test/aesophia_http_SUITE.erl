@@ -79,7 +79,7 @@ include_contract(_Config) ->
                 {ok, F} = file:read_file(filename:join(Dir, Name)),
                 {list_to_binary(Name), F}
               end || Name <- Files ]),
-    Opts = #{file_system => ExplicitFileSystem},
+    Opts = #{file_system => ExplicitFileSystem, src_file => <<"include.aes">>},
 
     _Code = compile_test_contract(Dir, "include", Opts),
 
