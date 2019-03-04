@@ -127,6 +127,9 @@ definitions:
       file_system:
         description: 'An explicit file system, mapping file names to file content'
         type: object
+      src_file:
+        description: 'Name of contract source file - only used in error messages'
+        type: string
   Error:
     type: object
     properties:
