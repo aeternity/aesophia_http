@@ -164,13 +164,13 @@ definitions:
   ACI:
     type: object
     properties:
-      json:
+      encoded_aci:
         type: object
-      string:
+      interface:
         type: string
     required:
-      - json
-      - string
+      - encoded_aci
+      - interface
   ByteCode:
     type: object
     properties:

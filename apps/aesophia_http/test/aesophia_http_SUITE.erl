@@ -77,7 +77,8 @@ identity_contract(_Config) ->
     ok.
 
 identity_aci(_Config) ->
-    #{<<"json">> := ACI, <<"string">> := Prototype} = create_aci("identity"),
+    #{<<"encoded_aci">> := ACI, <<"interface">> := Prototype} =
+        create_aci("identity"),
 
     ?assertMatch(<<"contract Identity =\n  function main : (int) => int\n">>, Prototype),
 
