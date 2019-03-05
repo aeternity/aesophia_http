@@ -1,11 +1,12 @@
 {application, aesophia_http,
  [{description, "An OTP application"},
-  {vsn, "0.1.0"},
+  {vsn, "2.0.0"},
   {registered, []},
   {mod, { aesophia_http_app, []}},
   {applications,
    [kernel,
     stdlib,
+    inets,
     eblake2,
     aeserialization,
     jsx,
@@ -13,7 +14,7 @@
     cowboy,
     aesophia
    ]},
-  {env,[{port,8080}]},
+  {env,[{port,3080}]},
   {modules, []},
 
   {maintainers, []},

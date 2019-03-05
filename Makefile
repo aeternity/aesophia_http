@@ -12,7 +12,7 @@ REBAR ?= rebar3
 all: swagger
 	@($(REBAR) compile)
 
-.PHONY: test
+.PHONY: test docker
 test: swagger
 	@($(REBAR) eunit)
 	@($(REBAR) ct)
@@ -50,6 +50,12 @@ updateswagger:
 $(SWAGGER_UI_GIT_DIR)/.git:
 	@git clone -n --depth 1 $(SWAGGER_UI_GIT) $(SWAGGER_UI_GIT_DIR)
 	( cd $(SWAGGER_UI_GIT_DIR) && git checkout master dist ; )
+
+docker:
+	@docker build -t aeternity/aesophia_http:local .
+
+prod-build: swagger
+	@($(REBAR) as prod release)
 
 clean:
 	rm -rf $(SWAGGER_DOCS_DIR)
