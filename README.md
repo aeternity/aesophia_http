@@ -3,7 +3,7 @@
 An HTTP interface to the Sophia compiler.It handles compiling
 contracts and generating ACI data for contract.
 
-HTTP interface uses port 8080, settable with application variable
+HTTP interface uses port 3080, settable with application variable
 aesophia_http.port.
 
 Interface paths:
