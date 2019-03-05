@@ -36,8 +36,7 @@ stop(_State) ->
 get_paths() ->
     [{path(Path), aesophia_http_handler, OperationId}
      || {OperationId, Spec} <- maps:to_list(endpoints:operations()),
-        {_Method, #{path := Path}} <- maps:to_list(Spec)
-    ] ++ [{<<"/api">>, aesophia_http_handler, 'Api'}].
+        {_Method, #{path := Path}} <- maps:to_list(Spec) ].
 
 path(Path0) ->
     Path1 = binary:replace(Path0, <<"}">>, <<"">>, [global]),

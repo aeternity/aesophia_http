@@ -22,6 +22,7 @@
         , include_aci/1
         , legacy_decode_data/1
         , encode_calldata/1
+        , get_api/1
         , get_version/1
         ]).
 
@@ -39,6 +40,7 @@ groups() ->
       , include_aci
       , legacy_decode_data
       , encode_calldata
+      , get_api
       , get_version
       ]}
     ].
@@ -146,6 +148,10 @@ get_version(_Config) ->
 
     ok.
 
+get_api(_Config) ->
+    {ok, 200, #{<<"api">> := _API}} = get_api(),
+
+    ok.
 
 %% Contract interface functions.
 contract_dir() ->
@@ -216,6 +222,10 @@ get_encode_calldata(Request) ->
 get_version() ->
     Host = internal_address(),
     http_request(Host, get, "version", []).
+
+get_api() ->
+    Host = internal_address(),
+    http_request(Host, get, "api", []).
 
 %% ============================================================
 %% private functions
