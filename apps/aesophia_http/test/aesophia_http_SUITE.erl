@@ -17,7 +17,9 @@
 %% test case exports
 %% external endpoints
 -export([ identity_contract/1
+        , identity_aci/1
         , include_contract/1
+        , include_aci/1
         , legacy_decode_data/1
         , encode_calldata/1
         , get_version/1
@@ -32,7 +34,9 @@ groups() ->
     [
      {contracts, [],
       [ identity_contract
+      , identity_aci
       , include_contract
+      , include_aci
       , legacy_decode_data
       , encode_calldata
       , get_version
@@ -72,6 +76,16 @@ identity_contract(_Config) ->
 
     ok.
 
+identity_aci(_Config) ->
+    #{<<"encoded_aci">> := ACI, <<"interface">> := Prototype} =
+        create_aci("identity"),
+
+    ?assertMatch(<<"contract Identity =\n  function main : (int) => int\n">>, Prototype),
+
+    ?assertMatch(#{<<"contract">> := _C}, ACI),
+
+    ok.
+
 include_contract(_Config) ->
     Dir = contract_dir(),
     Files = ["included.aes", "../contracts/included2.aes"],
@@ -84,6 +98,22 @@ include_contract(_Config) ->
     Opts = #{file_system => ExplicitFileSystem, src_file => <<"include.aes">>},
 
     _Code = compile_test_contract(Dir, "include", Opts),
+
+    ok.
+
+include_aci(_Config) ->
+%% TODO: Implement this
+%%     Dir = contract_dir(),
+%%     Files = ["included.aes", "../contracts/included2.aes"],
+%%     ExplicitFileSystem =
+%%         maps:from_list(
+%%             [ begin
+%%                 {ok, F} = file:read_file(filename:join(Dir, Name)),
+%%                 {list_to_binary(Name), F}
+%%               end || Name <- Files ]),
+%%     Opts = #{file_system => ExplicitFileSystem},
+
+%%     _ACI = create_aci(Dir, "include", Opts),
 
     ok.
 
@@ -134,6 +164,19 @@ compile_test_contract(Dir, Name, Opts) ->
     {ok, 200, #{<<"bytecode">> := Code}} = get_contract_bytecode(SophiaCode, Opts),
     Code.
 
+create_aci(Name) ->
+    Dir = contract_dir(),
+    create_aci(Dir, Name).
+
+create_aci(Dir, Name) ->
+    create_aci(Dir, Name, #{}).
+
+create_aci(Dir, Name, Opts) ->
+    FileName = filename:join(Dir, Name ++ ".aes"),
+    {ok, SophiaCode} = file:read_file(FileName),
+    {ok, 200, ACI = #{}} = get_aci(SophiaCode, Opts),
+    ACI.
+
 decode_data(Type, EncodedData) ->
     {ok, 200, #{<<"data">> := DecodedData}} =
          get_contract_decode_data(#{'sophia-type' => Type,
@@ -155,6 +198,11 @@ encode_calldata(Src, Fun, Args) ->
 get_contract_bytecode(SourceCode, Opts) ->
     Host = internal_address(),
     http_request(Host, post, "compile",
+                 #{ <<"code">> => SourceCode, <<"options">> => Opts }).
+
+get_aci(SourceCode, Opts) ->
+    Host = internal_address(),
+    http_request(Host, post, "aci",
                  #{ <<"code">> => SourceCode, <<"options">> => Opts }).
 
 get_contract_decode_data(Request) ->

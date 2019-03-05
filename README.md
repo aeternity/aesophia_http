@@ -8,10 +8,10 @@ aesophia_http.port.
 
 Interface paths:
 
-/contracts/code/compile - compile contract and return code in a JSON structure encoded to contract_bytearray.
+/aci - generate ACI format for contract in both JSON encoded and textual decoded forms. Tags 'code' and 'options'.
 
-/contracts/code/aci - generate ACI format for contract in both JSON encoded and textual decoded forms.
+/compile - compile contract and return code in a JSON structure encoded to contract_bytearray.
 
-Code in body under tag code.
+/decode-data - Tags 'sophia-type' and 'data'.
 
-This is definitely WIP.
+/encode-calldata - Tags 'source', 'function' and 'arguments'.

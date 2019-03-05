@@ -1,9 +1,9 @@
 -module(aesophia_http_handler).
 
 -export([init/2,
-	 handle_request_json/2,content_types_provided/2,
-	 allowed_methods/2,content_types_accepted/2
-	]).
+         handle_request_json/2,content_types_provided/2,
+         allowed_methods/2,content_types_accepted/2
+        ]).
 
 -record(state, { spec :: jsx:json_text()
                , validator :: jesse_state:state()
@@ -89,7 +89,7 @@ handle_request('DecodeData', Req, _Context) ->
                 {ok, Result} ->
                     {200, [], #{data => Result}};
                 {error, ErrorMsg} ->
-                    {400, [], #{reason => ErrorMsg}}
+                    {403, [], #{reason => ErrorMsg}}
             end
     end;
 
@@ -99,10 +99,12 @@ handle_request('GenerateACI', Req, _Context) ->
               #{ <<"code">> := Code
                , <<"options">> := Options }} ->
             case generate_aci(Code, Options) of
-                 {ok, ACI} ->
-                     {200, [], #{aci => aeser_api_encoder:encode(contract_bytearray, ACI)}}
-                 %% {error, ErrorMsg} ->
-                 %%     {403, [], #{reason => ErrorMsg}}
+                 {ok, EncACI, DecACI} ->
+                     {200, [],
+                      #{encoded_aci => jsx:decode(EncACI),
+                        interface => DecACI}};
+                 {error, ErrorMsg} ->
+                     {403, [], #{reason => ErrorMsg}}
              end;
         _ -> {403, [], #{reason => <<"Bad request">>}}
     end;
@@ -118,9 +120,14 @@ handle_request('Version', _Req, _Context) ->
 handle_request('Api', _Req, #{ spec := Spec }) ->
     {200, [], Spec}.
 
-generate_aci(_Contract, _Options) ->
-    %% TODO: Fill me in!
-    {ok, <<>>}.
+generate_aci(Contract, _Options) ->
+    case aeso_aci:encode(Contract) of
+        {ok,Enc} ->
+            Dec = aeso_aci:decode(Enc),
+            {ok,Enc,Dec};
+        {error,_} = Err ->
+            Err
+    end.
 
 compile_contract(Contract, Options) ->
     Opts = compile_options(Options),

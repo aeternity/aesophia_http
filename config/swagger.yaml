@@ -164,10 +164,13 @@ definitions:
   ACI:
     type: object
     properties:
-      aci:
-        $ref: '#/definitions/EncodedByteArray'
+      encoded_aci:
+        type: object
+      interface:
+        type: string
     required:
-      - aci
+      - encoded_aci
+      - interface
   ByteCode:
     type: object
     properties:
