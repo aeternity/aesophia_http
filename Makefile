@@ -9,10 +9,11 @@ MAKE := make
 
 REBAR ?= rebar3
 
-all: swagger
+.PHONY: test docker clean distclean swagger-docs
+
+all: swagger swagger-docs
 	@($(REBAR) compile)
 
-.PHONY: test docker
 test: swagger
 	@($(REBAR) eunit)
 	@($(REBAR) ct)
@@ -36,7 +37,9 @@ SWAGGER_UI_GIT = https://github.com/swagger-api/swagger-ui.git
 SWAGGER_UI_GIT_DIR = $(HTTP_APP)/priv/swagger-ui
 SWAGGER_DOCS_DIR = $(HTTP_APP)/priv/swagger-docs
 
-swagger-docs: |$(SWAGGER_UI_GIT_DIR)/.git
+swagger-docs: $(SWAGGER_DOCS_DIR)
+
+$(SWAGGER_DOCS_DIR): |$(SWAGGER_UI_GIT_DIR)/.git
 	@mkdir -p $(SWAGGER_DOCS_DIR)
 	@cp -p $(SWAGGER_UI_GIT_DIR)/dist/* $(SWAGGER_DOCS_DIR)
 	@cp -p $(HTTP_APP)/priv/swagger.json $(SWAGGER_DOCS_DIR)
@@ -63,5 +66,6 @@ clean:
 	@-rm $(SWAGGER_ENDPOINTS_SPEC)
 
 distclean:
-	rm -rf $(SWAGGER_DOCS_DIR) $(SWAGGER_UI_GIT_DIR)
+	rm -rf $(SWAGGER_DOCS_DIR) $(SWAGGER_UI_GIT_DIR) $(SWAGGER_ENDPOINTS_SPEC)
+	@$(REBAR) clean --all
 

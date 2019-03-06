@@ -126,6 +126,23 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
+  /api:
+    get:
+      operationId: 'Api'
+      description: 'Get the Api description'
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: 'API description'
+          schema:
+            $ref: '#/definitions/API'
+        '403':
+          description: 'Error'
+          schema:
+            $ref: '#/definitions/Error'
+
+
 definitions:
   Contract:
     type: object
@@ -171,6 +188,12 @@ definitions:
     required:
       - encoded_aci
       - interface
+  API:
+    type: object
+    properties:
+      api:
+        description: 'Swagger API description'
+        type: object
   ByteCode:
     type: object
     properties:

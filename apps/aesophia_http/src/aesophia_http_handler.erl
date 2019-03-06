@@ -28,8 +28,8 @@ content_types_provided(Req, State) ->
     {[{<<"application/json">>, handle_request_json}], Req, State}.
 
 handle_request_json(Req0, State = #state{ validator = Validator,
-                                         spec = Spec,
-                                         operation_id = OperationId }) ->
+                                          spec = Spec,
+                                          operation_id = OperationId }) ->
     Method = cowboy_req:method(Req0),
     try aesophia_http_api_validate:request(OperationId, Method, Req0, Validator) of
         {ok, Params, Req1} ->
@@ -118,7 +118,7 @@ handle_request('Version', _Req, _Context) ->
     end;
 
 handle_request('Api', _Req, #{ spec := Spec }) ->
-    {200, [], Spec}.
+    {200, [], #{api => jsx:decode(Spec)}}.
 
 generate_aci(Contract, _Options) ->
     case aeso_aci:encode(Contract) of
