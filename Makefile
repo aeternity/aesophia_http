@@ -55,6 +55,7 @@ $(SWAGGER_UI_GIT_DIR)/.git:
 	( cd $(SWAGGER_UI_GIT_DIR) && git checkout master dist ; )
 
 docker:
+	@docker pull aeternity/builder
 	@docker build -t aeternity/aesophia_http:local .
 
 prod-build: swagger

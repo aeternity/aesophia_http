@@ -6,7 +6,7 @@ contracts and generating ACI data for contract.
 HTTP interface uses port 3080, settable with application variable
 aesophia_http.port.
 
-Interface paths:
+Interface paths (see the `config/swagger.yaml` for details):
 
 /aci - generate ACI format for contract in both JSON encoded and textual decoded forms. Tags 'code' and 'options'.
 
@@ -15,3 +15,27 @@ Interface paths:
 /decode-data - Tags 'sophia-type' and 'data'.
 
 /encode-calldata - Tags 'source', 'function' and 'arguments'.
+
+/version - return the version of the Sophia compiler
+
+/api-version - return the version of the API
+
+/api - return the API in a JSON-term (intended to be consumed by tools)
+
+
+## Usage
+
+We publish a docker image as `aeternity/aesophia_http` - so if docker is in place
+all that is needed to have an HTTP server serving the Sophia compiler API is:
+```
+docker run -p <PORT>:3080 aeternity/aesophia_http
+```
+
+Where `PORT` is the local port where you'd like the API to be served.
+
+## Building
+
+The most convenient way to start the an HTTP server serving the Sophia compiler API is using
+docker. `make docker` will create a docker image `aeternity/aesophia_http:local` and it is
+started by `docker run -p <PORT>:3080 aeternity/aesophia_http:local` where `PORT` is the
+local port where you'd like the API to be served.
