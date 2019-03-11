@@ -25,6 +25,6 @@ Interface paths (see the `config/swagger.yaml` for details):
 ## Building
 
 The most convenient way to start the an HTTP server serving the Sophia compiler API is using
-docker. `make docker` will create a docker image `aeternity/aesophia_http:latest` and it is
+docker. `make docker` will create a docker image `aeternity/aesophia_http:local` and it is
 started by `docker run -p <PORT>:3080 aeternity/aesophia_http:local` where `PORT` is the
 local port where you'd like the API to be served.
