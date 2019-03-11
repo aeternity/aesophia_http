@@ -121,7 +121,7 @@ paths:
           description: 'Sophia compiler version'
           schema:
             $ref: '#/definitions/CompilerVersion'
-        '403':
+        '500':
           description: 'Error'
           schema:
             $ref: '#/definitions/Error'
@@ -137,7 +137,7 @@ paths:
           description: 'Sophia compiler version'
           schema:
             $ref: '#/definitions/APIVersion'
-        '403':
+        '500':
           description: 'Error'
           schema:
             $ref: '#/definitions/Error'
