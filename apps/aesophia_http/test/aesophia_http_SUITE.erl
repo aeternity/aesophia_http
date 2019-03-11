@@ -23,6 +23,7 @@
         , legacy_decode_data/1
         , encode_calldata/1
         , get_api/1
+        , get_api_version/1
         , get_version/1
         ]).
 
@@ -41,6 +42,7 @@ groups() ->
       , legacy_decode_data
       , encode_calldata
       , get_api
+      , get_api_version
       , get_version
       ]}
     ].
@@ -142,6 +144,12 @@ encode_calldata(_Config) ->
 
     ok.
 
+get_api_version(_Config) ->
+    {ok, 200, #{<<"api-version">> := Vsn}} = get_api_version(),
+    ?assertMatch({X, X}, {Vsn, <<"2.0.0">>}),
+
+    ok.
+
 get_version(_Config) ->
     {ok, 200, #{<<"version">> := Vsn}} = get_version(),
     ?assertMatch({X, X}, {{ok, Vsn}, aeso_compiler:version()}),
@@ -218,6 +226,10 @@ get_contract_decode_data(Request) ->
 get_encode_calldata(Request) ->
     Host = internal_address(),
     http_request(Host, post, "encode-calldata", Request).
+
+get_api_version() ->
+    Host = internal_address(),
+    http_request(Host, get, "api-version", []).
 
 get_version() ->
     Host = internal_address(),
@@ -302,60 +314,3 @@ process_http_return(R) ->
         {error, _} = Error ->
             Error
     end.
-
-call_code(Fun, Args) ->
-    Type    = ["(", string:join([ type_of_arg(Arg) || Arg <- Args ], ", "), ")"],
-    BinArgs = args_to_list(Args),
-    {code, list_to_binary(
-        [ "contract Call =\n"
-        , "  function ", Fun, " : ", Type, " => _\n"
-        , "  function __call() = ", Fun, "(", BinArgs, ")\n" ])}.
-
-type_of_arg(N) when is_integer(N) -> "int";
-type_of_arg({string, _}) -> "string";
-type_of_arg([H | _]) -> ["list(", type_of_arg(H), ")"];
-type_of_arg([]) -> "list(int)"; %% Don't know the element type
-type_of_arg(B) when is_binary(B), byte_size(B) == 32 -> "address";
-type_of_arg(B) when is_binary(B), byte_size(B) == 64 -> "signature";
-type_of_arg(T) when is_tuple(T) ->
-    ["(", string:join([ type_of_arg(X) || X <- tuple_to_list(T) ], ","), ")"];
-type_of_arg(M) when is_map(M) ->
-    case maps:to_list(M) of
-        []  -> %% empty map: can't infer type, default to int/int
-            "map(int, int)";
-        [{K, V} | _] ->
-            ["map(", type_of_arg(K), ", ", type_of_arg(V), ")"]
-    end.
-
-%% args_to_binary(Args) -> binary_string().
-%%  Take a list of arguments in "erlang format" and generate an
-%%  argument binary string. Strings are handled naively now.
-
-args_to_binary(Args) ->
-    %% ct:pal("Args ~tp\n", [Args]),
-    BinArgs = list_to_binary([$(,args_to_list(Args),$)]),
-    %% ct:pal("BinArgs ~tp\n", [BinArgs]),
-    BinArgs.
-
-args_to_list([A]) -> [arg_to_list(A)];          %The last one
-args_to_list([A1|Rest]) ->
-    [arg_to_list(A1),$,|args_to_list(Rest)];
-args_to_list([]) -> [].
-
-%%arg_to_list(<<N:256>>) -> integer_to_list(N);
-arg_to_list(N) when is_integer(N) -> integer_to_list(N);
-arg_to_list(B) when is_binary(B) ->             %A key
-    <<"0x", Enc/binary>> = aeu_hex:hexstring_encode(B),
-    ["#", binary_to_list(Enc)];
-arg_to_list({string,S}) -> ["\"",S,"\""];
-arg_to_list(L) when is_list(L) ->
-    [$[,args_to_list(L),$]];
-arg_to_list(T) when is_tuple(T) ->
-    [$(,args_to_list(tuple_to_list(T)),$)];
-arg_to_list(M) when is_map(M) ->
-    [${,map_to_list(maps:to_list(M)),$}].
-
-map_to_list([{K,V}]) -> [$[,arg_to_list(K),"] = ",arg_to_list(V)];
-map_to_list([{K,V},Fields]) ->
-    [$[,arg_to_list(K),"] = ",arg_to_list(V),$,|map_to_list(Fields)];
-map_to_list([]) -> [].

@@ -126,6 +126,22 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
+  /api-version:
+    get:
+      operationId: 'APIVersion'
+      description: 'Get the version of the API'
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: 'Sophia compiler version'
+          schema:
+            $ref: '#/definitions/APIVersion'
+        '403':
+          description: 'Error'
+          schema:
+            $ref: '#/definitions/Error'
+
   /api:
     get:
       operationId: 'Api'
@@ -163,6 +179,14 @@ definitions:
       src_file:
         description: 'Name of contract source file - only used in error messages'
         type: string
+  APIVersion:
+    type: object
+    properties:
+      api-version:
+        description: 'API compiler version'
+        type: string
+    required:
+      - api-version
   CompilerVersion:
     type: object
     properties:
