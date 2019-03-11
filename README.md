@@ -22,6 +22,17 @@ Interface paths (see the `config/swagger.yaml` for details):
 
 /api - return the API in a JSON-term (intended to be consumed by tools)
 
+
+## Usage
+
+We publish a docker image as `aeternity/aesophia_http` - so if docker is in place
+all that is needed to have an HTTP server serving the Sophia compiler API is:
+```
+docker run -p <PORT>:3080 aeternity/aesophia_http
+```
+
+Where `PORT` is the local port where you'd like the API to be served.
+
 ## Building
 
 The most convenient way to start the an HTTP server serving the Sophia compiler API is using
