@@ -88,7 +88,6 @@ curl -H "Content-Type: application/json" -d "{\"code\":\"$contract\",\"options\"
 To encode the call data necessary to call the function `set` with the
 argument `42`:
 
-
 ```
 curl -H "Content-Type: application/json" -d "{\"function\":\"set\",\"arguments\":[\"42\"],\"source\":\"$contract\"}" -X POST http://localhost:3080/encode-calldata
 
@@ -97,15 +96,14 @@ curl -H "Content-Type: application/json" -d "{\"function\":\"set\",\"arguments\"
 
 Finally decoding a return value:
 
-
 ```
 curl -H "Content-Type: application/json" -d "{\"data\":\"cb_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACr8s/aY\",\"sophia-type\":\"int\"}" -X POST http://localhost:3080/decode-data
 
 {"data":{"type":"word","value":42}}
 ```
 
-To get information about which version of the Sophia compiler, API
-version and the actual API:
+To get information about the current version of the Sophia compiler, API
+version and the actual API (paste into any [swagger file generator](https://editor.swagger.io/)):
 
 ```
 curl http://localhost:3080/version
