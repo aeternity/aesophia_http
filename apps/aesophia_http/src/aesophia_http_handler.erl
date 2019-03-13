@@ -284,7 +284,7 @@ decode_calldata_source(Calldata, FunName, Source) ->
                        , arguments => [ #{ type => T, value => V }
                                         || {T, V} <- lists:zip(Ts, Vs) ] }};
         {error, E} ->
-            {403, [], #{ reason => list_to_binary(E) }}
+            {403, [], #{ reason => iolist_to_binary(E) }}
     end.
 
 

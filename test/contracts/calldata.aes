@@ -1,0 +1,4 @@
+contract Test =
+  function foo(x : int) = x * 2
+  function bar() = 42
+  function baz(x : (int, int), y : string) = ()
