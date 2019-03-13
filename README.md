@@ -16,6 +16,10 @@ Interface paths (see the `config/swagger.yaml` for details):
 
 /encode-calldata - Tags 'source', 'function' and 'arguments'.
 
+/decode-calldata/bytecode - Input calldata and contract bytecode, get function name and VM type arguments.
+
+/decode-calldata/source - Input calldata and (possibly partial) conctract source code, get function name and Sophia type arguments.
+
 /version - return the version of the Sophia compiler
 
 /api-version - return the version of the API

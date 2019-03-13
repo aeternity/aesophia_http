@@ -110,6 +110,56 @@ paths:
           schema:
             $ref: '#/definitions/Error'
 
+  /decode-calldata/bytecode:
+    post:
+      operationId: 'DecodeCalldataBytecode'
+      description: 'Identify function name and arguments in Calldata for a compiled contract'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: 'Calldata + compiled contract'
+          required: true
+          schema:
+            $ref: '#/definitions/DecodeCalldataBytecode'
+      responses:
+        '200':
+          description: Binary encoded calldata
+          schema:
+            $ref: '#/definitions/DecodedCalldata'
+        '403':
+          description: Invalid contract
+          schema:
+            $ref: '#/definitions/Error'
+
+  /decode-calldata/source:
+    post:
+      operationId: 'DecodeCalldataSource'
+      description: 'Identify function name and arguments in Calldata for a (partial) contract'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: 'Calldata + contract (stub) code'
+          required: true
+          schema:
+            $ref: '#/definitions/DecodeCalldataSource'
+      responses:
+        '200':
+          description: Binary encoded calldata
+          schema:
+            $ref: '#/definitions/DecodedCalldata'
+        '403':
+          description: Invalid contract
+          schema:
+            $ref: '#/definitions/Error'
+
   /version:
     get:
       operationId: 'Version'
@@ -258,6 +308,39 @@ definitions:
           type: string
     required:
       - source
+      - function
+      - arguments
+  DecodeCalldataBytecode:
+    type: object
+    properties:
+      calldata:
+        description: 'Calldata to dissect'
+        $ref: '#/definitions/EncodedByteArray'
+      bytecode:
+        description: 'Compiled contract'
+        $ref: '#/definitions/EncodedByteArray'
+    required:
+      - calldata
+      - bytecode
+  DecodeCalldataSource:
+    type: object
+    properties:
+      calldata:
+        description: 'Calldata to dissect'
+        $ref: '#/definitions/EncodedByteArray'
+      source:
+        description: '(Possibly partial) Sophia contract code'
+        type: string
+  DecodedCalldata:
+    type: object
+    properties:
+      function:
+        type: string
+      arguments:
+        type: array
+        items:
+          type: object
+    required:
       - function
       - arguments
   Calldata:
