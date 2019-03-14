@@ -37,6 +37,8 @@ jobs:
           path: _build/test/logs
   docker_push_tag:
     executor: aebuilder
+    environment:
+      DOCKERHUB_REPO: aeternity/aesophia_http
     steps:
       - checkout
       - run:
