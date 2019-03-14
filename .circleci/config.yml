@@ -49,7 +49,9 @@ jobs:
       - run:
           name: Build and push Docker image to DockerHub
           command: |
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
             docker build -t ${DOCKERHUB_REPO:?}:${CIRCLE_BRANCH:?} .
+            docker push ${DOCKERHUB_REPO:?}:test-build
 
 workflows:
   build_push:
