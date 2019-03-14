@@ -6,6 +6,9 @@ executors:
       - image: aeternity/builder
         user: builder
     working_directory: ~/src
+  docker_builder:
+    docker:
+      - image: circleci/buildpack-deps:bionic
 
 jobs:
   build:
@@ -36,11 +39,13 @@ jobs:
       - store_artifacts:
           path: _build/test/logs
   docker_push_tag:
-    executor: aebuilder
+    executor: docker_builder
     environment:
       DOCKERHUB_REPO: aeternity/aesophia_http
     steps:
       - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
       - run:
           name: Build and push Docker image to DockerHub
           command: |
