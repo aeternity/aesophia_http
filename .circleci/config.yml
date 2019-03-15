@@ -6,6 +6,9 @@ executors:
       - image: aeternity/builder
         user: builder
     working_directory: ~/src
+  docker_builder:
+    docker:
+      - image: circleci/buildpack-deps:bionic
 
 jobs:
   build:
@@ -35,3 +38,31 @@ jobs:
             - _build/default/rebar3_20.3.8_plt
       - store_artifacts:
           path: _build/test/logs
+  docker_push_tag:
+    executor: docker_builder
+    environment:
+      DOCKERHUB_REPO: aeternity/aesophia_http
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: true
+      - run:
+          name: Build and push Docker image to DockerHub
+          command: |
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker build -t ${DOCKERHUB_REPO:?}:${CIRCLE_TAG:?} -t ${DOCKERHUB_REPO:?}:latest .
+            docker push ${DOCKERHUB_REPO:?}:${CIRCLE_TAG:?}
+            docker push ${DOCKERHUB_REPO:?}:latest
+
+workflows:
+  build_push:
+    jobs:
+      - build
+      - docker_push_tag:
+          requires:
+            - build
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v.*$/
