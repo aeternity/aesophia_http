@@ -126,7 +126,7 @@ handle_request('APIVersion', _Req, #{ spec := Spec }) ->
     end;
 
 handle_request('Api', _Req, #{ spec := Spec }) ->
-    {200, [], #{api => jsx:decode(Spec)}}.
+    {200, [], jsx:decode(Spec, [return_maps])}.
 
 generate_aci(Contract, _Options) ->
     case aeso_aci:encode(Contract) of

@@ -213,11 +213,8 @@ definitions:
       - encoded_aci
       - interface
   API:
+    description: 'Swagger API description'
     type: object
-    properties:
-      api:
-        description: 'Swagger API description'
-        type: object
   ByteCode:
     type: object
     properties:
