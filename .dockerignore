@@ -1,0 +1,12 @@
+*
+!rebar.config
+!rebar.lock
+!Makefile
+!apps
+!config
+!docker/entrypoint.sh
+!docker/healthcheck.sh
+!README.md
+!LICENSE
+apps/aesophia_http/priv/
+apps/aesophia_http/src/endpoints.erl
