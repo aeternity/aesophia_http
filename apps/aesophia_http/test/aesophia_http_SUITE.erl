@@ -196,7 +196,7 @@ get_version(_Config) ->
     ok.
 
 get_api(_Config) ->
-    {ok, 200, #{<<"api">> := _API}} = get_api(),
+    {ok, 200, #{<<"swagger">> := _Swagger}} = get_api(),
 
     ok.
 
