@@ -22,6 +22,8 @@
         , include_aci/1
         , legacy_decode_data/1
         , encode_calldata/1
+        , decode_calldata_bytecode/1
+        , decode_calldata_source/1
         , get_api/1
         , get_api_version/1
         , get_version/1
@@ -41,6 +43,8 @@ groups() ->
       , include_aci
       , legacy_decode_data
       , encode_calldata
+      , decode_calldata_bytecode
+      , decode_calldata_source
       , get_api
       , get_api_version
       , get_version
@@ -144,6 +148,41 @@ encode_calldata(_Config) ->
 
     ok.
 
+decode_calldata_bytecode(_Config) ->
+    {ok, ContractSrcBin} = read_test_contract("calldata"),
+    ContractSrc = binary_to_list(ContractSrcBin),
+    Contract = compile_test_contract("calldata"),
+
+    Data1 = encode_calldata(ContractSrc, "foo", ["42"]),
+    Data2 = encode_calldata(ContractSrc, "bar", []),
+    Data3 = encode_calldata(ContractSrc, "baz", ["(42, 43)", "\"hello\""]),
+
+    DoDec = fun(Data) -> do_decode_calldata_bytecode(#{calldata => Data, bytecode => Contract}) end,
+
+    {<<"foo">>, [#{<<"value">> := 42}]} = DoDec(Data1),
+    {<<"bar">>, []} = DoDec(Data2),
+    {<<"baz">>, [#{<<"value">> := [#{<<"value">> := 42}, #{<<"value">> := 43}]},
+                 #{<<"value">> := <<"hello">>}]} = DoDec(Data3),
+
+    ok.
+
+decode_calldata_source(_Config) ->
+    {ok, ContractSrcBin} = read_test_contract("calldata"),
+    ContractSrc = binary_to_list(ContractSrcBin),
+
+    Data1 = encode_calldata(ContractSrc, "foo", ["42"]),
+    Data2 = encode_calldata(ContractSrc, "bar", []),
+    Data3 = encode_calldata(ContractSrc, "baz", ["(42, 43)", "\"hello\""]),
+
+    DoDec = fun(F, Data) -> do_decode_calldata_source(#{calldata => Data, function => F, source => ContractSrcBin}) end,
+
+    {<<"foo">>, [#{<<"value">> := "42"}]} = DoDec(<<"foo">>, Data1),
+    {<<"bar">>, []} = DoDec(<<"bar">>, Data2),
+    {<<"baz">>, [#{<<"value">> := "(42, 43)"},
+                 #{<<"value">> := "\"hello\""}]} = DoDec(<<"baz">>, Data3),
+
+    ok.
+
 get_api_version(_Config) ->
     {ok, 200, #{<<"api-version">> := Vsn}} = get_api_version(),
     ?assertMatch({X, X}, {Vsn, <<"2.0.0">>}),
@@ -171,6 +210,10 @@ compile_test_contract(Name) ->
 
 compile_test_contract(Dir, Name) ->
     compile_test_contract(Dir, Name, #{}).
+
+read_test_contract(Name) ->
+    FileName = filename:join(contract_dir(), Name ++ ".aes"),
+    file:read_file(FileName).
 
 compile_test_contract(Dir, Name, Opts) ->
     FileName = filename:join(Dir, Name ++ ".aes"),
@@ -204,6 +247,16 @@ encode_calldata(Src, Fun, Args) ->
                                arguments => lists:map(fun list_to_binary/1, Args)}),
     Data.
 
+do_decode_calldata_bytecode(Map) ->
+    {ok, 200, #{<<"function">> := FName, <<"arguments">> := Args}} =
+        get_decode_calldata_bytecode(Map),
+    {FName, Args}.
+
+do_decode_calldata_source(Map) ->
+    {ok, 200, #{<<"function">> := FName, <<"arguments">> := Args}} =
+        get_decode_calldata_source(Map),
+    {FName, Args}.
+
 %% ============================================================
 %% HTTP Requests
 %% Note that some are internal and some are external!
@@ -226,6 +279,14 @@ get_contract_decode_data(Request) ->
 get_encode_calldata(Request) ->
     Host = internal_address(),
     http_request(Host, post, "encode-calldata", Request).
+
+get_decode_calldata_bytecode(Request) ->
+    Host = internal_address(),
+    http_request(Host, post, "decode-calldata/bytecode", Request).
+
+get_decode_calldata_source(Request) ->
+    Host = internal_address(),
+    http_request(Host, post, "decode-calldata/source", Request).
 
 get_api_version() ->
     Host = internal_address(),

@@ -90,7 +90,40 @@ handle_request('DecodeData', Req, _Context) ->
                     {200, [], #{data => Result}};
                 {error, ErrorMsg} ->
                     {403, [], #{reason => ErrorMsg}}
-            end
+            end;
+        _ -> {403, [], #{reason => <<"Bad request">>}}
+    end;
+
+handle_request('DecodeCalldataBytecode', Req, _Context) ->
+    case Req of
+        #{ 'DecodeCalldataBytecode' :=
+            #{ <<"calldata">> := EncodedCalldata,
+               <<"bytecode">> := EncodedBytecode } } ->
+            case {aeser_api_encoder:safe_decode(contract_bytearray, EncodedCalldata),
+                  aeser_api_encoder:safe_decode(contract_bytearray, EncodedBytecode)} of
+                {{ok, Calldata}, {ok, Bytecode}} ->
+                    decode_calldata_bytecode(Calldata, Bytecode);
+                {{error, _}, _} ->
+                    {403, [], #{reason => <<"Bad calldata">>}};
+                {_, {error, _}} ->
+                    {403, [], #{reason => <<"Bad bytecode">>}}
+            end;
+        _ -> {403, [], #{reason => <<"Bad request">>}}
+    end;
+
+handle_request('DecodeCalldataSource', Req, _Context) ->
+    case Req of
+        #{ 'DecodeCalldataSource' :=
+            #{ <<"calldata">> := EncodedCalldata,
+               <<"function">> := FunName,
+               <<"source">>   := Source } } ->
+            case aeser_api_encoder:safe_decode(contract_bytearray, EncodedCalldata) of
+                {ok, Calldata} ->
+                    decode_calldata_source(Calldata, FunName, Source);
+                {error, _} ->
+                    {403, [], #{reason => <<"Bad calldata">>}}
+            end;
+        _ -> {403, [], #{reason => <<"Bad request">>}}
     end;
 
 handle_request('GenerateACI', Req, _Context) ->
@@ -202,10 +235,64 @@ parse_type(BinaryString) ->
             {error, unicode:characters_to_binary(atom_to_list(ErrorAtom))}
     end.
 
+decode_calldata_bytecode(Calldata, SerialBytecode) ->
+    case deserialize(SerialBytecode) of
+        {ok, #{type_info := TypeInfo}} ->
+            decode_calldata_bytecode_(Calldata, TypeInfo);
+        {error, _} ->
+            {403, [], #{reason => <<"Could not deserialize Bytecode">>}}
+    end.
+
+decode_calldata_bytecode_(Calldata, TypeInfo) ->
+    case aeso_abi:get_function_hash_from_calldata(Calldata) of
+        {ok, Hash} ->
+            case {aeso_abi:function_name_from_type_hash(Hash, TypeInfo),
+                  aeso_abi:typereps_from_type_hash(Hash, TypeInfo)} of
+                {{ok, FunName}, {ok, ArgType, _OutType}} ->
+                    case aeso_heap:from_binary({tuple, [word, ArgType]}, Calldata) of
+                        {ok, {_Hash, VMArgs}} ->
+                            prepare_calldata_response(FunName, ArgType, VMArgs);
+                        {error, _} ->
+                            {403, [], #{reason => <<"Could not interpret Calldata as heap">>}}
+                    end;
+                {{error, _}, _} ->
+                    {403, [], #{reason => <<"Could not find function hash in Typeinfo">>}};
+                {_, {error, _}} ->
+                    {403, [], #{reason => <<"Could not encode typerep for Arguments">>}}
+            end;
+        {error, _} ->
+            {403, [], #{reason => <<"Could not find function hash in Calldata">>}}
+    end.
+
+prepare_calldata_response(FunName, ArgType, VMArgs) ->
+    try #{ <<"type">>  := <<"tuple">>,
+           <<"value">> := ArgsList } = prepare_for_json(ArgType, VMArgs),
+        {200, [], #{ function  => FunName,
+                     arguments => ArgsList }}
+    catch _:_Reason ->
+        {403, [], #{reason => <<"Error preparing JSON">>}}
+    end.
+
+decode_calldata_source(Calldata, FunName, Source) ->
+    case aeso_compiler:decode_calldata(binary_to_list(Source),
+                                       binary_to_list(FunName),
+                                       Calldata) of
+        {ok, ArgTypes, Values} ->
+            Ts = [ prettypr:format(aeso_pretty:type(T)) || T <- ArgTypes ],
+            Vs = [ prettypr:format(aeso_pretty:expr(V)) || V <- Values ],
+            {200, [], #{ function => FunName
+                       , arguments => [ #{ type => T, value => V }
+                                        || {T, V} <- lists:zip(Ts, Vs) ] }};
+        {error, E} ->
+            {403, [], #{ reason => iolist_to_binary(E) }}
+    end.
+
+
 %% -- Helper functions -------------------------------------------------------
 
 %% -- Contract serialization
 -define(SOPHIA_CONTRACT_VSN, 2).
+-define(SOPHIA_CONTRACT_VSN_1, 1).
 -define(COMPILER_SOPHIA_TAG, compiler_sophia).
 
 serialize(#{byte_code := ByteCode, type_info := TypeInfo,
@@ -221,6 +308,40 @@ serialize(#{byte_code := ByteCode, type_info := TypeInfo,
                                   serialization_template(?SOPHIA_CONTRACT_VSN),
                                   Fields).
 
+deserialize(Binary) ->
+    case aeser_chain_objects:deserialize_type_and_vsn(Binary) of
+        {compiler_sophia = Type, ?SOPHIA_CONTRACT_VSN_1 = Vsn, _Rest} ->
+            Template = serialization_template(Vsn),
+            [ {source_hash, Hash}
+            , {type_info, TypeInfo}
+            , {byte_code, ByteCode}
+            ] = aeser_chain_objects:deserialize(Type, Vsn, Template, Binary),
+            {ok, #{ source_hash => Hash
+                  , type_info => TypeInfo
+                  , byte_code => ByteCode
+                  , contract_vsn => Vsn
+                  }};
+        {compiler_sophia = Type, ?SOPHIA_CONTRACT_VSN = Vsn, _Rest} ->
+            Template = serialization_template(Vsn),
+            [ {source_hash, Hash}
+            , {type_info, TypeInfo}
+            , {byte_code, ByteCode}
+            , {compiler_version, CompilerVersion}
+            ] = aeser_chain_objects:deserialize(Type, Vsn, Template, Binary),
+            {ok, #{ source_hash => Hash
+                  , type_info => TypeInfo
+                  , byte_code => ByteCode
+                  , compiler_version => CompilerVersion
+                  , contract_vsn => Vsn
+                  }};
+        Other ->
+            {error, {illegal_code_object, Other}}
+    end.
+
+serialization_template(?SOPHIA_CONTRACT_VSN_1) ->
+    [ {source_hash, binary}
+    , {type_info, [{binary, binary, binary, binary}]} %% {type hash, name, arg type, out type}
+    , {byte_code, binary} ];
 serialization_template(?SOPHIA_CONTRACT_VSN) ->
     [ {source_hash, binary}
     , {type_info, [{binary, binary, binary, binary}]} %% {type hash, name, arg type, out type}
