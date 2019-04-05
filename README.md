@@ -73,7 +73,8 @@ To get the ACI of the contract we use the `/aci` interface:
 ```
 curl -H "Content-Type: application/json" -d "{\"code\":\"$contract\",\"options\":{}}" -X POST http://localhost:3080/aci
 
-{"encoded_aci":{"contract":{"name":"SimpleStorage","type_defs":[{"name":"state","vars":[],"typedef":"{data : int}"}],"functions":[{"name":"init","arguments":[{"name":"value","type":"int"}],"type":"{data : int}","stateful":false},{"name":"get","arguments":[],"type":"int","stateful":false},{"name":"set","arguments":[{"name":"value","type":"int"}],"type":"()","stateful":false}]}},"interface":"contract SimpleStorage =\n  function get : () => int\n  function set : (int) => ()\n"}
+{"encoded_aci":{"contract":{"name":"SimpleStorage","type_defs":[{"name":"state","vars":[],"typedef":{"record":[{"name":"data","type":["int"]}]}}],"functions":[{"name":"init","arguments":[{"name":"value","type":["int"]}],"returns":{"record":[{"name":"data","type":["int"]}]},"stateful":false},{"name":"get","arguments":[],"returns":"int","stateful":false},{"name":"set","arguments":[{"name":"value","type":["int"]}],"returns":{"tuple":[]},"stateful":false}]}},"interface":"contract SimpleStorage =\n  function get : () => int\n  function set : (int) => ()\n"}
+
 ```
 
 This returns a structure with two fields: `encoded_aci` is a
