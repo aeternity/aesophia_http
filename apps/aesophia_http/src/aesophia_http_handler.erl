@@ -215,7 +215,7 @@ decode_data(Type, Data) ->
 decode_data_(Type, Data) ->
     case parse_type(Type) of
         {ok, VMType} ->
-            try aeso_heap:from_binary(VMType, Data) of
+            try aeb_heap:from_binary(VMType, Data) of
                 {ok, Term} ->
                     try prepare_for_json(VMType, Term) of
                         R -> {ok, R}
@@ -244,12 +244,12 @@ decode_calldata_bytecode(Calldata, SerialBytecode) ->
     end.
 
 decode_calldata_bytecode_(Calldata, TypeInfo) ->
-    case aeso_abi:get_function_hash_from_calldata(Calldata) of
+    case aeb_abi:get_function_hash_from_calldata(Calldata) of
         {ok, Hash} ->
-            case {aeso_abi:function_name_from_type_hash(Hash, TypeInfo),
-                  aeso_abi:typereps_from_type_hash(Hash, TypeInfo)} of
+            case {aeb_abi:function_name_from_type_hash(Hash, TypeInfo),
+                  aeb_abi:typereps_from_type_hash(Hash, TypeInfo)} of
                 {{ok, FunName}, {ok, ArgType, _OutType}} ->
-                    case aeso_heap:from_binary({tuple, [word, ArgType]}, Calldata) of
+                    case aeb_heap:from_binary({tuple, [word, ArgType]}, Calldata) of
                         {ok, {_Hash, VMArgs}} ->
                             prepare_calldata_response(FunName, ArgType, VMArgs);
                         {error, _} ->
