@@ -22,7 +22,10 @@ start(_StartType, _StartArgs) ->
 				      {'_',Paths}
 				     ]),
     {ok,_} =  cowboy:start_clear(http, [{port,Port}],
-				 #{env => #{dispatch => Dispatch}}),
+				 #{env => #{dispatch => Dispatch},
+                   middlewares => [cowboy_router,
+                                   aesophia_cors_middleware,
+                                   cowboy_handler]}),
     aesophia_http_sup:start_link().
 
 %%--------------------------------------------------------------------
@@ -41,4 +44,3 @@ get_paths() ->
 path(Path0) ->
     Path1 = binary:replace(Path0, <<"}">>, <<"">>, [global]),
     binary:replace(Path1, <<"{">>, <<":">>, [global]).
-
