@@ -57,7 +57,10 @@ jobs:
 workflows:
   build_push:
     jobs:
-      - build
+      - build:
+          filters:
+            tags:
+              only: /^v.*$/
       - docker_push_tag:
           requires:
             - build
