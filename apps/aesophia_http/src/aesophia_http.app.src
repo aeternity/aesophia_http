@@ -1,6 +1,6 @@
 {application, aesophia_http,
  [{description, "An OTP application"},
-  {vsn, "2.0.0"},
+  {vsn, "2.1.0"},
   {registered, []},
   {mod, { aesophia_http_app, []}},
   {applications,
