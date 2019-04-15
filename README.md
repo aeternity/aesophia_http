@@ -143,7 +143,7 @@ curl -H "Content-Type: application/json" -d "{\"calldata\":\"cb_AAAAAAAAAAAAAAAA
 
 Returns:
 ```
-{"arguments":[{"type":[105,110,116],"value":[52,50]}],"function":"set"}
+{"arguments":[{"type":"int","value":"42"}],"function":"set"}
 ```
 
 

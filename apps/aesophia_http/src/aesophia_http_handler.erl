@@ -278,10 +278,11 @@ decode_calldata_source(Calldata, FunName, Source) ->
                                        binary_to_list(FunName),
                                        Calldata) of
         {ok, ArgTypes, Values} ->
-            Ts = [ prettypr:format(aeso_pretty:type(T)) || T <- ArgTypes ],
+            Ts = [ aeso_aci:encode_type(T) || T <- ArgTypes ],
             Vs = [ prettypr:format(aeso_pretty:expr(V)) || V <- Values ],
             {200, [], #{ function => FunName
-                       , arguments => [ #{ type => T, value => V }
+                       , arguments => [ #{ type => T,
+					   value => list_to_binary(V) }
                                         || {T, V} <- lists:zip(Ts, Vs) ] }};
         {error, E} ->
             {403, [], #{ reason => iolist_to_binary(E) }}
