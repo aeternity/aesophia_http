@@ -176,10 +176,13 @@ decode_calldata_source(_Config) ->
 
     DoDec = fun(F, Data) -> do_decode_calldata_source(#{calldata => Data, function => F, source => ContractSrcBin}) end,
 
-    {<<"foo">>, [#{<<"value">> := "42"}]} = DoDec(<<"foo">>, Data1),
+    {<<"foo">>, [#{<<"type">> := <<"int">>,
+                   <<"value">> := <<"42">>}]} = DoDec(<<"foo">>, Data1),
     {<<"bar">>, []} = DoDec(<<"bar">>, Data2),
-    {<<"baz">>, [#{<<"value">> := "(42, 43)"},
-                 #{<<"value">> := "\"hello\""}]} = DoDec(<<"baz">>, Data3),
+    {<<"baz">>, [#{<<"type">> := #{<<"tuple">> := [<<"int">>,<<"int">>]},
+                   <<"value">> := <<"(42, 43)">>},
+                 #{<<"type">> := <<"string">>,
+                   <<"value">> := <<"\"hello\"">>}]} = DoDec(<<"baz">>, Data3),
 
     ok.
 
