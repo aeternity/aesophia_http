@@ -77,8 +77,7 @@ curl -H "Content-Type: application/json" -d "{\"code\":\"$contract\",\"options\"
 ```
 Returns:
 ```
-{"encoded_aci":{"contract":{"name":"SimpleStorage","type_defs":[{"name":"state","vars":[],"typedef":{"record":[{"name":"data","type":["int"]}]}}],"functions":[{"name":"init","arguments":[{"name":"value","type":["int"]}],"returns":{"record":[{"name":"data","type":["int"]}]},"stateful":false},{"name":"get","arguments":[],"returns":"int","stateful":false},{"name":"set","arguments":[{"name":"value","type":["int"]}],"returns":{"tuple":[]},"stateful":false}]}},"interface":"contract SimpleStorage =\n  function get : () => int\n  function set : (int) => ()\n"}
-
+{"encoded_aci":{"contract":{"name":"SimpleStorage","state":{"record":[{"name":"data","type":"int"}]},"type_defs":[],"functions":[{"name":"init","arguments":[{"name":"value","type":"int"}],"returns":{"record":[{"name":"data","type":"int"}]},"stateful":false},{"name":"get","arguments":[],"returns":"int","stateful":false},{"name":"set","arguments":[{"name":"value","type":"int"}],"returns":{"tuple":[]},"stateful":false}]}},"interface":"contract SimpleStorage =\n  function get : () => int\n  function set : (int) => ()\n"}
 ```
 Important: If your contract code contains quotes, you need to escape every quote with a backslash:
 ```

@@ -162,9 +162,9 @@ handle_request('Api', _Req, #{ spec := Spec }) ->
     {200, [], jsx:decode(Spec, [return_maps])}.
 
 generate_aci(Contract, _Options) ->
-    case aeso_aci:encode(Contract) of
+    case aeso_aci:encode_contract(Contract) of
         {ok,Enc} ->
-            Dec = aeso_aci:decode(Enc),
+            Dec = aeso_aci:decode_contract(Enc),
             {ok,Enc,Dec};
         {error,_} = Err ->
             Err
