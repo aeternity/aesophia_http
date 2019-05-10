@@ -80,7 +80,32 @@ paths:
           description: Json encoded data
           schema:
             $ref: '#/definitions/SophiaJsonData'
-        '400':
+        '403':
+          description: Invalid data
+          schema:
+            $ref: '#/definitions/Error'
+
+  /decode-returndata/bytecode:
+    post:
+      operationId: 'DecodeReturnDataBytecode'
+      description: 'Decode return value from function all.'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: 'Binary data in Sophia ABI format'
+          required: true
+          schema:
+            $ref: '#/definitions/DecodeReturnDataBytecode'
+      responses:
+        '200':
+          description: Json encoded data
+          schema:
+            $ref: '#/definitions/SophiaJsonData'
+        '403':
           description: Invalid data
           schema:
             $ref: '#/definitions/Error'
@@ -307,6 +332,20 @@ definitions:
       - source
       - function
       - arguments
+  DecodeReturnDataBytecode:
+    type: object
+    properties:
+      bytecode:
+        description: 'Compiled contract'
+        $ref: '#/definitions/EncodedByteArray'
+      function:
+        type: string
+      return:
+        type: string
+    required:
+      - bytecode
+      - function
+      - return
   DecodeCalldataBytecode:
     type: object
     properties:

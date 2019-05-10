@@ -94,6 +94,29 @@ handle_request('DecodeData', Req, _Context) ->
         _ -> {403, [], #{reason => <<"Bad request">>}}
     end;
 
+handle_request('DecodeReturnDataBytecode', Req, _Context) ->
+    case Req of
+	#{ 'DecodeReturnDataBytecode' :=
+	    #{ <<"bytecode">> := EncodedBytecode,
+	       <<"function">> := FunName,
+	       <<"return">> := EncodedData} } ->
+	    case {aeser_api_encoder:safe_decode(contract_bytearray, EncodedBytecode),
+		  aeser_api_encoder:safe_decode(contract_bytearray, EncodedData)}of
+		{{ok, Bytecode}, {ok, Data}} ->
+		    case decode_returndata_bytecode(Bytecode, FunName, Data) of
+			{ok, Result} ->
+			    {200, [], #{data => Result}};
+			{error, ErrorMsg} ->
+			    {403, [], #{reason => ErrorMsg}}
+		    end;
+		{{error, _}, _} ->
+                    {403, [], #{reason => <<"Bad bytecode">>}};
+		{_, {error, _}} ->
+                    {403, [], #{reason => <<"Bad data">>}}
+	    end;
+	_ -> {403, [], #{reason => <<"Bad request">>}}
+    end;
+
 handle_request('DecodeCalldataBytecode', Req, _Context) ->
     case Req of
         #{ 'DecodeCalldataBytecode' :=
@@ -215,16 +238,20 @@ decode_data(Type, Data) ->
 decode_data_(Type, Data) ->
     case parse_type(Type) of
         {ok, VMType} ->
-            try aeb_heap:from_binary(VMType, Data) of
-                {ok, Term} ->
-                    try prepare_for_json(VMType, Term) of
-                        R -> {ok, R}
-                    catch throw:R -> R
-                    end;
-                {error, _} -> {error, <<"bad type/data">>}
-            catch _T:_E ->    {error, <<"bad argument">>}
-            end;
+	    decode_data_vmtype(VMType, Data);
         {error, _} = E -> E
+    end.
+
+decode_data_vmtype(VMType, Data) ->
+    try aeb_heap:from_binary(VMType, Data) of
+	{ok, Term} ->
+	    try prepare_for_json(VMType, Term) of
+		R -> {ok, R}
+	    catch throw:R -> R
+	    end;
+	{error, _} -> {error, <<"bad type/data">>}
+    catch
+	_T:_E -> {error, <<"bad argument">>}
     end.
 
 parse_type(BinaryString) ->
@@ -233,6 +260,37 @@ parse_type(BinaryString) ->
         {ok, _Type} = R -> R;
         {error, ErrorAtom} ->
             {error, unicode:characters_to_binary(atom_to_list(ErrorAtom))}
+    end.
+
+decode_returndata_bytecode(SerialBytecode, FunName, RetData) ->
+    case deserialize(SerialBytecode) of
+	{ok, #{type_info := TypeInfo}} ->
+	    decode_returndata_bytecode_(TypeInfo, FunName, RetData);
+	{error, _} ->
+            {error, <<"Could not deserialize Bytecode">>}
+    end.
+
+decode_returndata_bytecode_(TypeInfo, FunName, RetData) ->
+    case ret_typerep_from_function(FunName, TypeInfo) of
+	{ok,RetType} ->
+	    case decode_data_vmtype(RetType, RetData) of
+		{ok,Result} -> {ok, Result};
+		{error, _} = Err -> Err
+	    end;
+	{error, _} ->
+	    {error, <<"Could not find function in Typeinfo">>}
+    end.
+
+%% Directly transposed from aeb_abi:arg_typerep_from_function
+ret_typerep_from_function(Function, TypeInfo) ->
+    case lists:keyfind(Function, 2, TypeInfo) of
+        {_TypeHash, Function, _ArgTypeBin,RetTypeBin} ->
+            case aeb_heap:from_binary(typerep, RetTypeBin) of
+                {ok, RetType} -> {ok, RetType};
+                {error,_} -> {error, bad_type_data}
+            end;
+        false ->
+            {error, unknown_function}
     end.
 
 decode_calldata_bytecode(Calldata, SerialBytecode) ->
