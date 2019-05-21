@@ -1,6 +1,6 @@
 {application, aesophia_http,
- [{description, "An OTP application"},
-  {vsn, "2.1.0"},
+ [{description, "HTTP interface for Sophia compiler"},
+  {vsn, "3.0.0"},
   {registered, []},
   {mod, { aesophia_http_app, []}},
   {applications,

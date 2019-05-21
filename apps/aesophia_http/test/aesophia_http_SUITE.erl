@@ -188,7 +188,7 @@ decode_calldata_source(_Config) ->
 
 get_api_version(_Config) ->
     {ok, 200, #{<<"api-version">> := Vsn}} = get_api_version(),
-    ?assertMatch({X, X}, {Vsn, <<"2.1.0">>}),
+    ?assertMatch({X, X}, {Vsn, <<"3.0.0">>}),
 
     ok.
 
