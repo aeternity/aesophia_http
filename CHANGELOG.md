@@ -6,7 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- `/decode-call-resuls` - return ACI style JSON values for a contract call result.
 ### Changed
+- Update to latest Sophia - this includes an updated and improved ACI module.
 ### Removed
 
 ## [3.0.0] - 2019-05-21

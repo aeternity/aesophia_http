@@ -126,16 +126,33 @@ handle_request('DecodeCalldataSource', Req, _Context) ->
         _ -> {403, [], #{reason => <<"Bad request">>}}
     end;
 
+handle_request('DecodeCallResult', Req, _Context) ->
+    case Req of
+        #{ 'SophiaCallResultInput' :=
+           #{ <<"source">>      := Source,
+              <<"function">>    := FunName,
+              <<"call-result">> := CallRes,
+              <<"call-value">>  := EncodedCallValue } } ->
+            case aeser_api_encoder:safe_decode(contract_bytearray, EncodedCallValue) of
+                {ok, CallValue} ->
+                    decode_call_result(Source, FunName, CallRes, CallValue);
+                {error, _} ->
+                    {403, [], #{reason => <<"Bad call-value">>}}
+            end;
+        _ ->
+            {403, [], #{reason => <<"Bad request">>}}
+    end;
+
 handle_request('GenerateACI', Req, _Context) ->
     case Req of
         #{'Contract' :=
               #{ <<"code">> := Code
                , <<"options">> := Options }} ->
             case generate_aci(Code, Options) of
-                 {ok, EncACI, DecACI} ->
+                 {ok, JsonACI, StringACI} ->
                      {200, [],
-                      #{encoded_aci => jsx:decode(EncACI),
-                        interface => DecACI}};
+                      #{encoded_aci => lists:last(JsonACI),
+                        interface   => StringACI}};
                  {error, ErrorMsg} ->
                      {403, [], #{reason => ErrorMsg}}
              end;
@@ -161,11 +178,12 @@ handle_request('APIVersion', _Req, #{ spec := Spec }) ->
 handle_request('Api', _Req, #{ spec := Spec }) ->
     {200, [], jsx:decode(Spec, [return_maps])}.
 
-generate_aci(Contract, _Options) ->
-    case aeso_aci:encode(Contract) of
-        {ok,Enc} ->
-            Dec = aeso_aci:decode(Enc),
-            {ok,Enc,Dec};
+generate_aci(Contract, Options) ->
+    Opts = compile_options(Options),
+    case aeso_aci:contract_interface(json, Contract, Opts) of
+        {ok, JsonACI} ->
+            {ok, StubACI} = aeso_aci:render_aci_json(JsonACI),
+            {ok, JsonACI, StubACI};
         {error,_} = Err ->
             Err
     end.
@@ -278,18 +296,31 @@ decode_calldata_source(Calldata, FunName, Source) ->
                                        binary_to_list(FunName),
                                        Calldata) of
         {ok, ArgTypes, Values} ->
-            Ts = [ aeso_aci:encode_type(T) || T <- ArgTypes ],
-            Vs = [ prettypr:format(aeso_pretty:expr(V)) || V <- Values ],
+            Ts = [ aeso_aci:json_encode_type(T) || T <- ArgTypes ],
+            Vs = [ aeso_aci:json_encode_expr(V) || V <- Values ],
             {200, [], #{ function => FunName
-                       , arguments => [ #{ type => T,
-					   value => list_to_binary(V) }
+                       , arguments => [ #{ type => T, value => V }
                                         || {T, V} <- lists:zip(Ts, Vs) ] }};
+        {error, E} ->
+            {403, [], #{ reason => iolist_to_binary(E) }}
+    end.
+
+decode_call_result(Source, FunName, CallRes, CallValue) ->
+    case aeso_compiler:to_sophia_value(binary_to_list(Source), binary_to_list(FunName),
+                                       bin_to_res_atom(CallRes), CallValue) of
+        {ok, Ast} ->
+            {200, [], aeso_aci:json_encode_expr(Ast)};
         {error, E} ->
             {403, [], #{ reason => iolist_to_binary(E) }}
     end.
 
 
 %% -- Helper functions -------------------------------------------------------
+
+bin_to_res_atom(<<"ok">>)     -> ok;
+bin_to_res_atom(<<"revert">>) -> revert;
+bin_to_res_atom(<<"error">>)  -> error.
+
 
 %% -- Contract serialization
 -define(SOPHIA_CONTRACT_VSN, 2).

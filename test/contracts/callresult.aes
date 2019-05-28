@@ -1,0 +1,10 @@
+contract Remote =
+  function f : () => ()
+contract Test =
+  record r = { x : int, y : string, z : map(int, int) }
+  datatype d('a) = One('a, 'a) | Two
+  function foo : () => int
+  function bar : () => (string, d(int), d(int))
+  function baz : () => r
+  function xyz : () => (oracle(int, int), oracle_query(int, int), Remote, address)
+  function abc : () => (bytes(1), bytes(14), bytes(32), bool)

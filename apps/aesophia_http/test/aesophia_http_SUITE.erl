@@ -18,12 +18,14 @@
 %% external endpoints
 -export([ identity_contract/1
         , identity_aci/1
+        , faulty_contract/1
         , include_contract/1
         , include_aci/1
         , legacy_decode_data/1
         , encode_calldata/1
         , decode_calldata_bytecode/1
         , decode_calldata_source/1
+        , decode_call_result/1
         , get_api/1
         , get_api_version/1
         , get_version/1
@@ -39,12 +41,14 @@ groups() ->
      {contracts, [],
       [ identity_contract
       , identity_aci
+      , faulty_contract
       , include_contract
       , include_aci
       , legacy_decode_data
       , encode_calldata
       , decode_calldata_bytecode
       , decode_calldata_source
+      , decode_call_result
       , get_api
       , get_api_version
       , get_version
@@ -80,7 +84,7 @@ end_per_testcase(_Case, _Config) ->
 
 identity_contract(_Config) ->
     %% Compile test contract "identity.aes"
-    _Code = compile_test_contract("identity"),
+    {ok, _Code} = compile_test_contract("identity"),
 
     ok.
 
@@ -88,9 +92,16 @@ identity_aci(_Config) ->
     #{<<"encoded_aci">> := ACI, <<"interface">> := Prototype} =
         create_aci("identity"),
 
-    ?assertMatch(<<"contract Identity =\n  function main : (int) => int\n">>, Prototype),
+    ?assertMatch(<<"contract Identity =\n"
+                   "  function main : (int) => int\n">>, Prototype),
 
     ?assertMatch(#{<<"contract">> := _C}, ACI),
+
+    ok.
+
+faulty_contract(_Config) ->
+    %% Compile test contract "identity.aes"
+    {error, _Msg} = compile_test_contract("faulty"),
 
     ok.
 
@@ -105,29 +116,28 @@ include_contract(_Config) ->
               end || Name <- Files ]),
     Opts = #{file_system => ExplicitFileSystem, src_file => <<"include.aes">>},
 
-    _Code = compile_test_contract(Dir, "include", Opts),
+    {ok, _Code} = compile_test_contract(Dir, "include", Opts),
 
     ok.
 
 include_aci(_Config) ->
-%% TODO: Implement this
-%%     Dir = contract_dir(),
-%%     Files = ["included.aes", "../contracts/included2.aes"],
-%%     ExplicitFileSystem =
-%%         maps:from_list(
-%%             [ begin
-%%                 {ok, F} = file:read_file(filename:join(Dir, Name)),
-%%                 {list_to_binary(Name), F}
-%%               end || Name <- Files ]),
-%%     Opts = #{file_system => ExplicitFileSystem},
+    Dir = contract_dir(),
+    Files = ["included.aes", "../contracts/included2.aes"],
+    ExplicitFileSystem =
+        maps:from_list(
+            [ begin
+                {ok, F} = file:read_file(filename:join(Dir, Name)),
+                {list_to_binary(Name), F}
+              end || Name <- Files ]),
+    Opts = #{file_system => ExplicitFileSystem},
 
-%%     _ACI = create_aci(Dir, "include", Opts),
+    _ACI = create_aci(Dir, "include", Opts),
 
     ok.
 
 legacy_decode_data(_Config) ->
     Int42 = <<"cb_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACr8s/aY">>,
-    Type  = <<"int">>,
+    Type  = <<"address">>,
     ?assertMatch(#{ <<"type">> := <<"word">>, <<"value">> := 42},
                  decode_data(Type, Int42)),
 
@@ -151,7 +161,7 @@ encode_calldata(_Config) ->
 decode_calldata_bytecode(_Config) ->
     {ok, ContractSrcBin} = read_test_contract("calldata"),
     ContractSrc = binary_to_list(ContractSrcBin),
-    Contract = compile_test_contract("calldata"),
+    {ok, Contract} = compile_test_contract("calldata"),
 
     Data1 = encode_calldata(ContractSrc, "foo", ["42"]),
     Data2 = encode_calldata(ContractSrc, "bar", []),
@@ -176,13 +186,51 @@ decode_calldata_source(_Config) ->
 
     DoDec = fun(F, Data) -> do_decode_calldata_source(#{calldata => Data, function => F, source => ContractSrcBin}) end,
 
-    {<<"foo">>, [#{<<"type">> := <<"int">>,
-                   <<"value">> := <<"42">>}]} = DoDec(<<"foo">>, Data1),
+    {<<"foo">>, [#{<<"type">> := <<"int">>, <<"value">> := 42}]} = DoDec(<<"foo">>, Data1),
     {<<"bar">>, []} = DoDec(<<"bar">>, Data2),
     {<<"baz">>, [#{<<"type">> := #{<<"tuple">> := [<<"int">>,<<"int">>]},
-                   <<"value">> := <<"(42, 43)">>},
+                   <<"value">> := [42, 43]},
                  #{<<"type">> := <<"string">>,
-                   <<"value">> := <<"\"hello\"">>}]} = DoDec(<<"baz">>, Data3),
+                   <<"value">> := <<"hello">>}]} = DoDec(<<"baz">>, Data3),
+
+    ok.
+
+decode_call_result(_Config) ->
+    {ok, SrcBin} = read_test_contract("callresult"),
+
+    Value1 = 42,
+    Value2 = {<<"Hello world!">>, {variant, 0, [12, 18]}, {variant, 1, []}},
+    Value3 = {42, <<"Hello world!">>, #{1 => 2, 2 => 3, 3 => 4}},
+    Value4 = {<<1:256>>, <<2:256>>, <<3:256>>, <<4:256>>},
+    Value5 = {1, 2, 3, 1},
+
+    BinValue1 = aeser_api_encoder:encode(contract_bytearray, aeb_heap:to_binary(Value1)),
+    BinValue2 = aeser_api_encoder:encode(contract_bytearray, aeb_heap:to_binary(Value2)),
+    BinValue3 = aeser_api_encoder:encode(contract_bytearray, aeb_heap:to_binary(Value3)),
+    BinValue4 = aeser_api_encoder:encode(contract_bytearray, aeb_heap:to_binary(Value4)),
+    BinValue5 = aeser_api_encoder:encode(contract_bytearray, aeb_heap:to_binary(Value5)),
+
+    JRes1 = do_decode_call_result(#{source => SrcBin, function => <<"foo">>,
+                                    'call-result' => <<"ok">>, 'call-value' => BinValue1 }),
+    JRes2 = do_decode_call_result(#{source => SrcBin, function => <<"bar">>,
+                                    'call-result' => <<"ok">>, 'call-value' => BinValue2 }),
+    JRes3 = do_decode_call_result(#{source => SrcBin, function => <<"baz">>,
+                                    'call-result' => <<"ok">>, 'call-value' => BinValue3 }),
+    JRes4 = do_decode_call_result(#{source => SrcBin, function => <<"xyz">>,
+                                    'call-result' => <<"ok">>, 'call-value' => BinValue4 }),
+    JRes5 = do_decode_call_result(#{source => SrcBin, function => <<"abc">>,
+                                    'call-result' => <<"ok">>, 'call-value' => BinValue5 }),
+
+
+    ?assertEqual(42, JRes1),
+    ?assertEqual([<<"Hello world!">>, #{<<"One">> => [12,18]}, #{<<"Two">> => []}], JRes2),
+    ?assertEqual([#{<<"x">> => 42}, #{<<"y">> => <<"Hello world!">>}, #{<<"z">> => [[1,2],[2,3],[3,4]]}], JRes3),
+    ?assertEqual([<<"ok_1111111111111111111111111111111K9XzgRm">>,
+                  <<"oq_1111111111111111111111111111111SMEUraM">>,
+                  <<"ct_111111111111111111111111111111ZbGweRY">>,
+                  <<"ak_111111111111111111111111111111gp6TPRw">>], JRes4),
+    ?assertEqual([<<"#01">>,<<"#0000000000000000000000000002">>,
+                  <<"#0000000000000000000000000000000000000000000000000000000000000003">>, true], JRes5),
 
     ok.
 
@@ -221,8 +269,10 @@ read_test_contract(Name) ->
 compile_test_contract(Dir, Name, Opts) ->
     FileName = filename:join(Dir, Name ++ ".aes"),
     {ok, SophiaCode} = file:read_file(FileName),
-    {ok, 200, #{<<"bytecode">> := Code}} = get_contract_bytecode(SophiaCode, Opts),
-    Code.
+    case get_contract_bytecode(SophiaCode, Opts) of
+        {ok, 200, #{<<"bytecode">> := Code}} -> {ok, Code};
+        {ok, 403, #{<<"reason">> := ErrMsg}} -> {error, ErrMsg}
+    end.
 
 create_aci(Name) ->
     Dir = contract_dir(),
@@ -260,6 +310,11 @@ do_decode_calldata_source(Map) ->
         get_decode_calldata_source(Map),
     {FName, Args}.
 
+do_decode_call_result(Map) ->
+    {ok, 200, JsonValue} =
+        get_decode_call_result(Map),
+    JsonValue.
+
 %% ============================================================
 %% HTTP Requests
 %% Note that some are internal and some are external!
@@ -290,6 +345,10 @@ get_decode_calldata_bytecode(Request) ->
 get_decode_calldata_source(Request) ->
     Host = internal_address(),
     http_request(Host, post, "decode-calldata/source", Request).
+
+get_decode_call_result(Request) ->
+    Host = internal_address(),
+    http_request(Host, post, "decode-call-result", Request).
 
 get_api_version() ->
     Host = internal_address(),

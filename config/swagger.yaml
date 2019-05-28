@@ -30,6 +30,10 @@ paths:
           description: 'ACI for contract'
           schema:
             $ref: '#/definitions/ACI'
+        '400':
+          description: Invalid input
+          schema:
+            $ref: '#/definitions/Error'
         '403':
           description: Invalid input
           schema:
@@ -55,6 +59,10 @@ paths:
           description: Byte code response
           schema:
             $ref: '#/definitions/ByteCode'
+        '400':
+          description: Invalid data
+          schema:
+            $ref: '#/definitions/Error'
         '403':
           description: Invalid contract
           schema:
@@ -84,6 +92,39 @@ paths:
           description: Invalid data
           schema:
             $ref: '#/definitions/Error'
+        '403':
+          description: Invalid data
+          schema:
+            $ref: '#/definitions/Error'
+
+  /decode-call-result:
+    post:
+      operationId: 'DecodeCallResult'
+      description: 'Decode the result of contract call'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Binary data in Sophia ABI format
+          required: true
+          schema:
+            $ref: '#/definitions/SophiaCallResultInput'
+      responses:
+        '200':
+          description: Json encoded data
+          schema:
+            $ref: '#/definitions/SophiaCallResult'
+        '400':
+          description: Invalid data
+          schema:
+            $ref: '#/definitions/Error'
+        '403':
+          description: Invalid data
+          schema:
+            $ref: '#/definitions/Error'
 
   /encode-calldata:
     post:
@@ -105,6 +146,10 @@ paths:
           description: Binary encoded calldata
           schema:
             $ref: '#/definitions/Calldata'
+        '400':
+          description: Invalid data
+          schema:
+            $ref: '#/definitions/Error'
         '403':
           description: Invalid contract
           schema:
@@ -130,6 +175,10 @@ paths:
           description: Binary encoded calldata
           schema:
             $ref: '#/definitions/DecodedCalldata'
+        '400':
+          description: Invalid data
+          schema:
+            $ref: '#/definitions/Error'
         '403':
           description: Invalid contract
           schema:
@@ -155,8 +204,12 @@ paths:
           description: Binary encoded calldata
           schema:
             $ref: '#/definitions/DecodedCalldata'
+        '400':
+          description: Invalid data
+          schema:
+            $ref: '#/definitions/Error'
         '403':
-          description: Invalid contract
+          description: Invalid data
           schema:
             $ref: '#/definitions/Error'
 
@@ -272,6 +325,27 @@ definitions:
         $ref: '#/definitions/EncodedByteArray'
     required:
       - bytecode
+  SophiaCallResultInput:
+    type: object
+    properties:
+      source:
+        description: '(Possibly partial) Sophia contract code/interface'
+        type: string
+      function:
+        description: 'Name of the called function'
+        type: string
+      call-result:
+        description: 'Call result type (ok | revert | error)'
+        type: string
+      call-value:
+        description: 'Call result value (ABI encoded data or error string)'
+        type: string
+    required:
+      - source
+      - function
+      - call-result
+      - call-value
+  SophiaCallResult: {}
   SophiaBinaryData:
     type: object
     properties:
