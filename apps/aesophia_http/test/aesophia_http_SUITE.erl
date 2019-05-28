@@ -224,7 +224,7 @@ decode_call_result(_Config) ->
 
     ?assertEqual(42, JRes1),
     ?assertEqual([<<"Hello world!">>, #{<<"One">> => [12,18]}, #{<<"Two">> => []}], JRes2),
-    ?assertEqual([#{<<"x">> => 42}, #{<<"y">> => <<"Hello world!">>}, #{<<"z">> => [[1,2],[2,3],[3,4]]}], JRes3),
+    ?assertEqual(#{<<"x">> => 42, <<"y">> => <<"Hello world!">>, <<"z">> => [[1,2],[2,3],[3,4]]}, JRes3),
     ?assertEqual([<<"ok_1111111111111111111111111111111K9XzgRm">>,
                   <<"oq_1111111111111111111111111111111SMEUraM">>,
                   <<"ct_111111111111111111111111111111ZbGweRY">>,
