@@ -62,7 +62,7 @@ workflows:
             tags:
               only: /^v.*$/
       - docker_push_tag:
-          context: ae_dockerhub
+          context: ae-dockerhub
           requires:
             - build
           filters:
