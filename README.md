@@ -55,7 +55,7 @@ contract SimpleStorage =
   record state = { data : int }
   function init(value : int) : state = { data = value }
   function get() : int = state.data
-  function set(value : int) = put(state{data = value})
+  stateful function set(value : int) = put(state{data = value})
 ```
 
 To make the example calls easier to read we have bound the shell
@@ -66,7 +66,7 @@ contract="contract SimpleStorage =
   record state = { data : int }
   function init(value : int) : state = { data = value }
   function get() : int = state.data
-  function set(value : int) = put(state{data = value})"
+  stateful function set(value : int) = put(state{data = value})"
 ```
 
 ### Generating ACI
