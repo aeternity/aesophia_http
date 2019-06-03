@@ -6,9 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- `/decode-call-result` - return ACI style JSON values for a contract call result.
 ### Changed
-- Update to latest Sophia - this includes an updated and improved ACI module.
+### Removed
+
+## [3.1.0] - 2019-06-03
+### Added
+- `/decode-call-result` - new endpoint, returns ACI style JSON values for a contract
+  call result.
+### Changed
+- Update to latest Sophia - this includes an updated and improved ACI module +
+  a bug fix for create_calldata (negative literals).
 ### Removed
 
 ## [3.0.0] - 2019-05-21
@@ -34,7 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial HTTP interface: /aci, /compile, /decode-data, /encode-calldata, /version, /api-version, /api
 - Docker support (aeternity/aesophia_http)
 
-[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v3.0.0...HEAD
+[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v3.1.0...HEAD
+[3.1.0]: https://github.com/aeternity/aesophia_http/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/aeternity/aesophia_http/compare/v2.1.0...v3.0.0
 [2.1.0]: https://github.com/aeternity/aesophia_http/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/aeternity/aesophia_http/releases/tag/v2.0.0
