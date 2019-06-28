@@ -208,7 +208,7 @@ encode_calldata(Source, Function, Arguments) ->
     case aeso_compiler:create_calldata(binary_to_list(Source),
                                        binary_to_list(Function),
                                        lists:map(fun binary_to_list/1, Arguments)) of
-        {ok, Calldata, _VMArgTypes, _VMRetType} ->
+        {ok, Calldata} ->
             {ok, aeser_api_encoder:encode(contract_bytearray, Calldata)};
         Err = {error, _} ->
             Err
@@ -262,10 +262,10 @@ decode_calldata_bytecode(Calldata, SerialBytecode) ->
     end.
 
 decode_calldata_bytecode_(Calldata, TypeInfo) ->
-    case aeb_abi:get_function_hash_from_calldata(Calldata) of
+    case aeb_aevm_abi:get_function_hash_from_calldata(Calldata) of
         {ok, Hash} ->
-            case {aeb_abi:function_name_from_type_hash(Hash, TypeInfo),
-                  aeb_abi:typereps_from_type_hash(Hash, TypeInfo)} of
+            case {aeb_aevm_abi:function_name_from_type_hash(Hash, TypeInfo),
+                  aeb_aevm_abi:typereps_from_type_hash(Hash, TypeInfo)} of
                 {{ok, FunName}, {ok, ArgType, _OutType}} ->
                     case aeb_heap:from_binary({tuple, [word, ArgType]}, Calldata) of
                         {ok, {_Hash, VMArgs}} ->

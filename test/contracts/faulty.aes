@@ -1,6 +1,6 @@
 contract Bad =
   record state = { var : int }
 
-  function init() = {var = 0}
-  stateful function foo(i : int) =
+  entrypoint init() = {var = 0}
+  stateful entrypoint foo(i : int) =
     put(state.var = i)

@@ -93,7 +93,7 @@ identity_aci(_Config) ->
         create_aci("identity"),
 
     ?assertMatch(<<"contract Identity =\n"
-                   "  function main : (int) => int\n">>, Prototype),
+                   "  entrypoint main : (int) => int\n">>, Prototype),
 
     ?assertMatch(#{<<"contract">> := _C}, ACI),
 
@@ -150,7 +150,7 @@ encode_calldata(_Config) ->
                  "  type an_alias('a) = (string, 'a)\n"
                  "  record r = {x : an_alias(int), y : variant}\n"
                  "  datatype variant = Red | Blue(map(string, int))\n"
-                 "  function foo : (", string:join(Ts, ", "), ") => int\n" ])
+                 "  entrypoint foo : (", string:join(Ts, ", "), ") => int\n" ])
           end,
 
     encode_calldata(Src(["int", "string"]), "foo", ["42", "\"foo\""]),
@@ -202,7 +202,7 @@ decode_call_result(_Config) ->
     Value2 = {<<"Hello world!">>, {variant, 0, [12, 18]}, {variant, 1, []}},
     Value3 = {42, <<"Hello world!">>, #{1 => 2, 2 => 3, 3 => 4}},
     Value4 = {<<1:256>>, <<2:256>>, <<3:256>>, <<4:256>>},
-    Value5 = {1, 2, 3, 1},
+    Value5 = {1 bsl (31 * 8), 2 bsl (18 * 8), 3, 1},
 
     BinValue1 = aeser_api_encoder:encode(contract_bytearray, aeb_heap:to_binary(Value1)),
     BinValue2 = aeser_api_encoder:encode(contract_bytearray, aeb_heap:to_binary(Value2)),
@@ -236,7 +236,7 @@ decode_call_result(_Config) ->
 
 get_api_version(_Config) ->
     {ok, 200, #{<<"api-version">> := Vsn}} = get_api_version(),
-    ?assertMatch({X, X}, {Vsn, <<"3.1.0">>}),
+    ?assertMatch({X, X}, {Vsn, <<"3.2.0">>}),
 
     ok.
 
