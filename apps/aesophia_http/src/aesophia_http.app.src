@@ -1,6 +1,6 @@
 {application, aesophia_http,
  [{description, "HTTP interface for Sophia compiler"},
-  {vsn, "3.1.0"},
+  {vsn, "3.2.0"},
   {registered, []},
   {mod, { aesophia_http_app, []}},
   {applications,

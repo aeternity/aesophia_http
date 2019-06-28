@@ -1,4 +1,4 @@
 contract Test =
-  function foo(x : int) = x * 2
-  function bar() = 42
-  function baz(x : (int, int), y : string) = ()
+  entrypoint foo(x : int) = x * 2
+  entrypoint bar() = 42
+  entrypoint baz(x : (int, int), y : string) = ()
