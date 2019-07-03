@@ -399,9 +399,16 @@ definitions:
       calldata:
         description: 'Calldata to dissect'
         $ref: '#/definitions/EncodedByteArray'
+      function:
+        description: 'Name of the function to call'
+        type: string
       source:
         description: '(Possibly partial) Sophia contract code'
         type: string
+    required:
+      - calldata
+      - function
+      - source
   DecodedCalldata:
     type: object
     properties:
