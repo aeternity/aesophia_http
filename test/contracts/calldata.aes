@@ -1,4 +1,11 @@
+contract Remote =
+  entrypoint f : () => unit
 contract Test =
-  entrypoint foo(x : int) = x * 2
-  entrypoint bar() = 42
-  entrypoint baz(x : int * int, y : string) = ()
+  record r = { x : int, y : string, z : map(int, int) }
+  datatype d('a) = One('a, 'a) | Two
+  entrypoint a(x : int * bool * string * unit) = ()
+  entrypoint b(x : d(int) * d(int)) = ()
+  entrypoint c(x : r) = ()
+  entrypoint d(x : bytes(2) * bytes(14) * bytes(32) * bytes(65)) = ()
+  entrypoint e(x : oracle(int, int) * oracle_query(int, int) * Remote * address) = ()
+  entrypoint f(x : list(int)) = ()

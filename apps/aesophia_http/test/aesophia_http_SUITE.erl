@@ -21,6 +21,7 @@
         , faulty_contract/1
         , include_contract/1
         , include_aci/1
+        , include_generate_calldata/1
         , legacy_decode_data/1
         , encode_calldata/1
         , decode_calldata_bytecode/1
@@ -32,18 +33,22 @@
         ]).
 
 all() ->
-    [
-     {group, contracts}
+    [ {group, contracts} %% default == {group, fate}
+    , {group, fate}
+    , {group, aevm}
     ].
 
 groups() ->
     [
+     {fate, [], [{group, contracts}]},
+     {aevm, [], [{group, contracts}]},
      {contracts, [],
       [ identity_contract
       , identity_aci
       , faulty_contract
       , include_contract
       , include_aci
+      , include_generate_calldata
       , legacy_decode_data
       , encode_calldata
       , decode_calldata_bytecode
@@ -66,8 +71,12 @@ init_per_suite(Config) ->
 end_per_suite(_Config) ->
     ok.
 
-
-init_per_group(contracts, Config) -> Config.
+init_per_group(fate, Config) ->
+    [{backend, fate} | Config];
+init_per_group(aevm, Config) ->
+    [{backend, aevm} | Config];
+init_per_group(_Grp, Config) ->
+    Config.
 
 end_per_group(_Group, _Config) ->
     ok.
@@ -82,16 +91,15 @@ end_per_testcase(_Case, _Config) ->
 %% Test cases
 %% ============================================================
 
-identity_contract(_Config) ->
+identity_contract(Config) ->
     %% Compile test contract "identity.aes"
-    {ok, _Code} = compile_test_contract("identity"),
+    {ok, _Code} = compile_test_contract(backend(Config), "identity"),
 
     ok.
 
 identity_aci(_Config) ->
     #{<<"encoded_aci">> := ACI, <<"interface">> := Prototype} =
         create_aci("identity"),
-
     ?assertMatch(<<"contract Identity =\n"
                    "  entrypoint main : (int) => int\n">>, Prototype),
 
@@ -99,13 +107,12 @@ identity_aci(_Config) ->
 
     ok.
 
-faulty_contract(_Config) ->
-    %% Compile test contract "identity.aes"
-    {error, _Msg} = compile_test_contract("faulty"),
+faulty_contract(Config) ->
+    {error, _Msg} = compile_test_contract(backend(Config), "faulty"),
 
     ok.
 
-include_contract(_Config) ->
+include_contract(Config) ->
     Dir = contract_dir(),
     Files = ["included.aes", "../contracts/included2.aes"],
     ExplicitFileSystem =
@@ -116,7 +123,7 @@ include_contract(_Config) ->
               end || Name <- Files ]),
     Opts = #{file_system => ExplicitFileSystem, src_file => <<"include.aes">>},
 
-    {ok, _Code} = compile_test_contract(Dir, "include", Opts),
+    {ok, _Code} = compile_test_contract(backend(Config), Dir, "include", Opts),
 
     ok.
 
@@ -135,104 +142,228 @@ include_aci(_Config) ->
 
     ok.
 
-legacy_decode_data(_Config) ->
-    Int42 = <<"cb_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACr8s/aY">>,
-    Type  = <<"address">>,
-    ?assertMatch(#{ <<"type">> := <<"word">>, <<"value">> := 42},
-                 decode_data(Type, Int42)),
+include_generate_calldata(Config) ->
+    Dir = contract_dir(),
+    Files = ["included.aes", "../contracts/included2.aes"],
+    ExplicitFileSystem =
+        maps:from_list(
+            [ begin
+                {ok, F} = file:read_file(filename:join(Dir, Name)),
+                {list_to_binary(Name), F}
+              end || Name <- Files ]),
+    Opts = #{file_system => ExplicitFileSystem},
+
+    {ok, ContractSrcBin} = read_test_contract("include"),
+    ContractSrc = binary_to_list(ContractSrcBin),
+
+    encode_calldata(backend(Config), ContractSrc, "foo", [], Opts),
 
     ok.
 
-encode_calldata(_Config) ->
+
+legacy_decode_data(Config) ->
+    case backend(Config) of
+        fate -> {skip, legacy_decode_not_in_fate};
+        _ ->
+            Int42 = <<"cb_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACr8s/aY">>,
+            Type  = <<"address">>,
+            ?assertMatch(#{ <<"type">> := <<"word">>, <<"value">> := 42},
+                         decode_data(Type, Int42)),
+
+            ok
+    end.
+
+encode_calldata(Config) ->
     Src = fun(Ts) ->
             lists:flatten(
                 ["contract Dummy =\n",
-                 "  type an_alias('a) = (string, 'a)\n"
+                 "  type an_alias('a) = string * 'a\n"
                  "  record r = {x : an_alias(int), y : variant}\n"
                  "  datatype variant = Red | Blue(map(string, int))\n"
                  "  entrypoint foo : (", string:join(Ts, ", "), ") => int\n" ])
           end,
 
-    encode_calldata(Src(["int", "string"]), "foo", ["42", "\"foo\""]),
-    encode_calldata(Src(["variant", "r"]), "foo", ["Blue({[\"a\"] = 4})", "{x = (\"b\", 5), y = Red}"]),
+    encode_calldata(backend(Config), Src(["int", "string"]), "foo", ["42", "\"foo\""]),
+    encode_calldata(backend(Config), Src(["variant", "r"]), "foo", ["Blue({[\"a\"] = 4})", "{x = (\"b\", 5), y = Red}"]),
 
     ok.
 
-decode_calldata_bytecode(_Config) ->
+decode_calldata_bytecode(Config) ->
     {ok, ContractSrcBin} = read_test_contract("calldata"),
     ContractSrc = binary_to_list(ContractSrcBin),
-    {ok, Contract} = compile_test_contract("calldata"),
+    {ok, Contract} = compile_test_contract(backend(Config), "calldata"),
 
-    Data1 = encode_calldata(ContractSrc, "foo", ["42"]),
-    Data2 = encode_calldata(ContractSrc, "bar", []),
-    Data3 = encode_calldata(ContractSrc, "baz", ["(42, 43)", "\"hello\""]),
+    DoEnc = fun(F, V) -> encode_calldata(backend(Config), ContractSrc, binary_to_list(F), [V]) end,
+    Datas = maps:map(DoEnc, test_data()),
 
-    DoDec = fun(Data) -> do_decode_calldata_bytecode(#{calldata => Data, bytecode => Contract}) end,
+    DoDec = fun(_F, Data) -> do_decode_calldata_bytecode(backend(Config), #{calldata => Data, bytecode => Contract}) end,
+    Results = maps:map(DoDec, Datas),
 
-    {<<"foo">>, [#{<<"value">> := 42}]} = DoDec(Data1),
-    {<<"bar">>, []} = DoDec(Data2),
-    {<<"baz">>, [#{<<"value">> := [#{<<"value">> := 42}, #{<<"value">> := 43}]},
-                 #{<<"value">> := <<"hello">>}]} = DoDec(Data3),
+    Expects =
+        case backend(Config) of
+            aevm ->
+                #{ <<"a">> => [#{<<"type">> => <<"tuple">>,
+                                 <<"value">> => [#{<<"type">> => <<"word">>,<<"value">> => 42},
+                                                 #{<<"type">> => <<"word">>,<<"value">> => 1},
+                                                 #{<<"type">> => <<"string">>,<<"value">> => <<"Hello">>},
+                                                 #{<<"type">> => <<"tuple">>,<<"value">> => []}]}]
+                 , <<"b">> => [#{<<"type">> => <<"tuple">>,
+                                 <<"value">> => [#{<<"type">> => <<"variant">>, <<"value">> => [0, #{<<"type">> => <<"word">>,<<"value">> => 12},
+                                                                                                   #{<<"type">> => <<"word">>,<<"value">> => 18}]},
+                                                 #{<<"type">> => <<"variant">>,<<"value">> => [1]}]}]
+                 , <<"c">> => [#{<<"type">> => <<"tuple">>,
+                                 <<"value">> => [#{<<"type">> => <<"word">>,<<"value">> => 43},
+                                                 #{<<"type">> => <<"string">>,<<"value">> => <<"Foo">>},
+                                                 #{<<"type">> => <<"map">>, <<"value">> => [#{<<"key">> => #{<<"type">> => <<"word">>,<<"value">> => 1},
+                                                                                              <<"val">> => #{<<"type">> => <<"word">>, <<"value">> => 2}}]}]}]
+                 , <<"d">> => [#{<<"type">> => <<"tuple">>,
+                                 <<"value">> => [#{<<"type">> => <<"word">>, <<"value">> => 1766847064778384329583297500742918515827483896875618958121606201292619776},
+                                                 #{<<"type">> => <<"word">>, <<"value">> => 1780731860627700044960722568375367503147497605696303575386481456500965376},
+                                                 #{<<"type">> => <<"word">>, <<"value">> => 1780731860627700044960722568376592200742329637303199754547598369979440671},
+                                                 #{<<"type">> => <<"tuple">>, <<"value">> => [#{<<"type">> => <<"word">>, <<"value">> => 1780731860627700044960722568376592200742329637303199754547598369979440671},
+                                                                                              #{<<"type">> => <<"word">>, <<"value">> => 1780731860627700044960722568376592200742329637303199754547598369979440671},
+                                                                                              #{<<"type">> => <<"word">>, <<"value">> => 0}]}]}]
+                 , <<"e">> => [#{<<"type">> => <<"tuple">>,
+                                 <<"value">> => [#{<<"type">> => <<"word">>,<<"value">> => 1},
+                                                 #{<<"type">> => <<"word">>,<<"value">> => 2},
+                                                 #{<<"type">> => <<"word">>,<<"value">> => 3},
+                                                 #{<<"type">> => <<"word">>,<<"value">> => 4}]}]
+                 , <<"f">> => [#{<<"type">> => <<"list">>,
+                                 <<"value">> =>
+                                    [#{<<"type">> => <<"word">>,<<"value">> => 1},
+                                     #{<<"type">> => <<"word">>,<<"value">> => 2},
+                                     #{<<"type">> => <<"word">>,<<"value">> => 4},
+                                     #{<<"type">> => <<"word">>,<<"value">> => 8},
+                                     #{<<"type">> => <<"word">>,<<"value">> => 16}]}]
+                 };
+            _ ->
+                #{ <<"a">> => [#{<<"type">> => <<"tuple">>,
+                                 <<"value">> => [#{<<"type">> => <<"int">>,<<"value">> => 42},
+                                                 #{<<"type">> => <<"bool">>,<<"value">> => true},
+                                                 #{<<"type">> => <<"string">>,<<"value">> => <<"Hello">>},
+                                                 #{<<"type">> => <<"unit">>,<<"value">> => <<>>}]}]
+                 , <<"b">> => [#{<<"type">> => <<"tuple">>,
+                                 <<"value">> => [#{<<"type">> => <<"variant">>, <<"value">> => [0, #{<<"type">> => <<"int">>,<<"value">> => 12},
+                                                                                                   #{<<"type">> => <<"int">>,<<"value">> => 18}]},
+                                                 #{<<"type">> => <<"variant">>,<<"value">> => [1]}]}]
+                 , <<"c">> => [#{<<"type">> => <<"tuple">>,
+                                 <<"value">> => [#{<<"type">> => <<"int">>,<<"value">> => 43},
+                                                 #{<<"type">> => <<"string">>,<<"value">> => <<"Foo">>},
+                                                 #{<<"type">> => <<"map">>, <<"value">> => [#{<<"key">> => #{<<"type">> => <<"int">>,<<"value">> => 1},
+                                                                                              <<"val">> => #{<<"type">> => <<"int">>, <<"value">> => 2}}]}]}]
+                 , <<"d">> => [#{<<"type">> => <<"tuple">>,
+                                 <<"value">> => [#{<<"type">> => <<"bytes">>, <<"value">> => <<"ba_AAEYQB5m">>},
+                                                 #{<<"type">> => <<"bytes">>, <<"value">> => <<"ba_AAECAwQFBgcICQoLDA2sTJYu">>},
+                                                 #{<<"type">> => <<"bytes">>, <<"value">> => <<"ba_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8vKHtN">>},
+                                                 #{<<"type">> => <<"bytes">>, <<"value">> => <<"ba_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8AAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHwCpqpny">>}]}]
+                 , <<"e">> => [#{<<"type">> => <<"tuple">>,
+                                 <<"value">> => [#{<<"type">> => <<"oracle">>, <<"value">> => <<"ok_11111111111111111111111111111118qjnEr">>},
+                                                 #{<<"type">> => <<"oracle_query">>, <<"value">> => <<"oq_1111111111111111111111111111111Hrt6FG">>},
+                                                 #{<<"type">> => <<"contract">>, <<"value">> => <<"ct_1111111111111111111111111111111Rnzy1V">>},
+                                                 #{<<"type">> => <<"address">>, <<"value">> => <<"ak_1111111111111111111111111111111VcnZxy">>}]}]
+                 , <<"f">> => [#{<<"type">> => <<"list">>,
+                                 <<"value">> =>
+                                    [#{<<"type">> => <<"int">>,<<"value">> => 1},
+                                     #{<<"type">> => <<"int">>,<<"value">> => 2},
+                                     #{<<"type">> => <<"int">>,<<"value">> => 4},
+                                     #{<<"type">> => <<"int">>,<<"value">> => 8},
+                                     #{<<"type">> => <<"int">>,<<"value">> => 16}]}]
+                 }
+        end,
 
-    ok.
+    Check = fun(K) -> E = {K, maps:get(K, Expects)}, V = maps:get(K, Results), ?assertEqual(E, V) end,
+    [ Check(K) || K <- maps:keys(Expects) ].
 
-decode_calldata_source(_Config) ->
+decode_calldata_source(Config) ->
     {ok, ContractSrcBin} = read_test_contract("calldata"),
     ContractSrc = binary_to_list(ContractSrcBin),
 
-    Data1 = encode_calldata(ContractSrc, "foo", ["42"]),
-    Data2 = encode_calldata(ContractSrc, "bar", []),
-    Data3 = encode_calldata(ContractSrc, "baz", ["(42, 43)", "\"hello\""]),
+    DoEnc = fun(F, V) -> encode_calldata(backend(Config), ContractSrc, binary_to_list(F), [V]) end,
+    Datas = maps:map(DoEnc, test_data()),
 
-    DoDec = fun(F, Data) -> do_decode_calldata_source(#{calldata => Data, function => F, source => ContractSrcBin}) end,
 
-    {<<"foo">>, [#{<<"type">> := <<"int">>, <<"value">> := 42}]} = DoDec(<<"foo">>, Data1),
-    {<<"bar">>, []} = DoDec(<<"bar">>, Data2),
-    {<<"baz">>, [#{<<"type">> := #{<<"tuple">> := [<<"int">>,<<"int">>]},
-                   <<"value">> := [42, 43]},
-                 #{<<"type">> := <<"string">>,
-                   <<"value">> := <<"hello">>}]} = DoDec(<<"baz">>, Data3),
+    DoDec = fun(F, V) -> do_decode_calldata_source(backend(Config), #{calldata => V, function => F, source => ContractSrcBin}) end,
+    Results = maps:map(DoDec, Datas),
 
-    ok.
+    Expects =
+        #{ <<"a">> => [#{<<"type">> => #{<<"tuple">> => [<<"int">>,<<"bool">>,<<"string">>, #{<<"tuple">> => []}]},
+                         <<"value">> => [42,true,<<"Hello">>,[]]}]
+         , <<"b">> => [#{<<"type">> => #{<<"tuple">> => [#{<<"Test.d">> => [<<"int">>]}, #{<<"Test.d">> => [<<"int">>]}]},
+                         <<"value">> => [#{<<"One">> => [12,18]},#{<<"Two">> => []}]}]
+         , <<"c">> => [#{<<"type">> => #{<<"record">> => [#{<<"name">> => <<"x">>,<<"type">> => <<"int">>},
+                                                          #{<<"name">> => <<"y">>,<<"type">> => <<"string">>},
+                                                          #{<<"name">> => <<"z">>, <<"type">> => #{<<"map">> => [<<"int">>,<<"int">>]}}]},
+                         <<"value">> => #{<<"x">> => 43,<<"y">> => <<"Foo">>, <<"z">> => [[1,2]]}}]
+         , <<"d">> => [#{<<"type">> => #{<<"tuple">> => [#{<<"bytes">> => 2}, #{<<"bytes">> => 14}, #{<<"bytes">> => 32}, #{<<"bytes">> => 65}]},
+                         <<"value">> => [<<"#0001">>,<<"#000102030405060708090a0b0c0d">>, <<"#000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f">>,
+                                         <<"#000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f00">>]}]
+         , <<"e">> => [#{<<"type">> => #{<<"tuple">> => [#{<<"oracle">> => [<<"int">>,<<"int">>]}, #{<<"oracle_query">> => [<<"int">>,<<"int">>]}, <<"Remote">>, <<"address">>]},
+                         <<"value">> => [<<"ok_11111111111111111111111111111118qjnEr">>, <<"oq_1111111111111111111111111111111Hrt6FG">>,
+                                         <<"ct_1111111111111111111111111111111Rnzy1V">>, <<"ak_1111111111111111111111111111111VcnZxy">>]}]
+         , <<"f">> => [#{<<"type">> => #{<<"list">> => [<<"int">>]}, <<"value">> => [1,2,4,8,16]}]
+         },
 
-decode_call_result(_Config) ->
+    Check = fun(K) -> E = {K, maps:get(K, Expects)}, V = maps:get(K, Results), ?assertEqual(E, V) end,
+    [ Check(K) || K <- maps:keys(Expects) ].
+
+decode_call_result(Config) ->
     {ok, SrcBin} = read_test_contract("callresult"),
 
-    Value1 = 42,
-    Value2 = {<<"Hello world!">>, {variant, 0, [12, 18]}, {variant, 1, []}},
-    Value3 = {42, <<"Hello world!">>, #{1 => 2, 2 => 3, 3 => 4}},
-    Value4 = {<<1:256>>, <<2:256>>, <<3:256>>, <<4:256>>},
-    Value5 = {1 bsl (31 * 8), 2 bsl (18 * 8), 3, 1},
+    Values = bin_test_data(backend(Config)),
 
-    BinValue1 = aeser_api_encoder:encode(contract_bytearray, aeb_heap:to_binary(Value1)),
-    BinValue2 = aeser_api_encoder:encode(contract_bytearray, aeb_heap:to_binary(Value2)),
-    BinValue3 = aeser_api_encoder:encode(contract_bytearray, aeb_heap:to_binary(Value3)),
-    BinValue4 = aeser_api_encoder:encode(contract_bytearray, aeb_heap:to_binary(Value4)),
-    BinValue5 = aeser_api_encoder:encode(contract_bytearray, aeb_heap:to_binary(Value5)),
+    DoDec = fun(K, V) -> do_decode_call_result(backend(Config), #{source => SrcBin, function => K,
+                                                                  'call-result' => <<"ok">>, 'call-value' => V}) end,
+    Results = maps:map(DoDec, Values),
+    Expects =
+        #{ <<"a">> => [42,true,<<"Hello">>,[]]
+         , <<"b">> => [#{<<"One">> => [12,18]},#{<<"Two">> => []}]
+         , <<"c">> => #{<<"x">> => 43,<<"y">> => <<"Foo">>,<<"z">> => [[1,2]]}
+         , <<"d">> => [<<"#0001">>,<<"#000102030405060708090a0b0c0d">>,
+                       <<"#000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f">>,
+                       <<"#000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f00">>]
+         , <<"e">> => [<<"ok_11111111111111111111111111111118qjnEr">>,
+                       <<"oq_1111111111111111111111111111111Hrt6FG">>,
+                       <<"ct_1111111111111111111111111111111Rnzy1V">>,
+                       <<"ak_1111111111111111111111111111111VcnZxy">>]
+         , <<"f">> => [1,2,4,8,16]
+         },
 
-    JRes1 = do_decode_call_result(#{source => SrcBin, function => <<"foo">>,
-                                    'call-result' => <<"ok">>, 'call-value' => BinValue1 }),
-    JRes2 = do_decode_call_result(#{source => SrcBin, function => <<"bar">>,
-                                    'call-result' => <<"ok">>, 'call-value' => BinValue2 }),
-    JRes3 = do_decode_call_result(#{source => SrcBin, function => <<"baz">>,
-                                    'call-result' => <<"ok">>, 'call-value' => BinValue3 }),
-    JRes4 = do_decode_call_result(#{source => SrcBin, function => <<"xyz">>,
-                                    'call-result' => <<"ok">>, 'call-value' => BinValue4 }),
-    JRes5 = do_decode_call_result(#{source => SrcBin, function => <<"abc">>,
-                                    'call-result' => <<"ok">>, 'call-value' => BinValue5 }),
+    Check = fun(K) -> E = maps:get(K, Expects), V = maps:get(K, Results), ?assertEqual({K, E}, {K, V}) end,
+    [ Check(K) || K <- maps:keys(Expects) ].
 
+test_data() ->
+    #{ <<"a">> => "(42, true, \"Hello\", ())"
+     , <<"b">> => "(One(12, 18), Two)"
+     , <<"c">> => "{x = 43, y = \"Foo\", z = { [1] = 2 }}"
+     , <<"d">> => "(#0001, #000102030405060708090A0B0C0D,"
+                  " #000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F,"
+                  " #000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F000102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F00)"
+     , <<"e">> => "(ok_11111111111111111111111111111118qjnEr, oq_1111111111111111111111111111111Hrt6FG,"
+                  " ct_1111111111111111111111111111111Rnzy1V, ak_1111111111111111111111111111111VcnZxy)"
+     , <<"f">> => "[1, 2, 4, 8, 16]" }.
 
-    ?assertEqual(42, JRes1),
-    ?assertEqual([<<"Hello world!">>, #{<<"One">> => [12,18]}, #{<<"Two">> => []}], JRes2),
-    ?assertEqual(#{<<"x">> => 42, <<"y">> => <<"Hello world!">>, <<"z">> => [[1,2],[2,3],[3,4]]}, JRes3),
-    ?assertEqual([<<"ok_1111111111111111111111111111111K9XzgRm">>,
-                  <<"oq_1111111111111111111111111111111SMEUraM">>,
-                  <<"ct_111111111111111111111111111111ZbGweRY">>,
-                  <<"ak_111111111111111111111111111111gp6TPRw">>], JRes4),
-    ?assertEqual([<<"#01">>,<<"#0000000000000000000000000002">>,
-                  <<"#0000000000000000000000000000000000000000000000000000000000000003">>, true], JRes5),
+bin_test_data(Backend) ->
+    {ok, ContractSrcBin} = read_test_contract("calldata"),
+    ContractSrc = binary_to_list(ContractSrcBin),
+    {ok, Contract} = compile_test_contract(aevm, "calldata"),
+    {ok, SerBytecode} = aeser_api_encoder:safe_decode(contract_bytearray, Contract),
+    {ok, #{type_info := TypeInfo}} = aesophia_http_handler:deserialize(SerBytecode),
 
-    ok.
+    Enc = fun(F, V) ->
+              EncData = encode_calldata(Backend, ContractSrc, binary_to_list(F), [V]),
+              {ok, Data} = aeser_api_encoder:safe_decode(contract_bytearray, EncData),
+              case Backend of
+                  aevm ->
+                      {ok, Hash} = aeb_aevm_abi:get_function_hash_from_calldata(Data),
+                      {ok, ArgType, _OutType} = aeb_aevm_abi:typereps_from_type_hash(Hash, TypeInfo),
+                      {ok, {_, {Args}}} = aeb_heap:from_binary({tuple, [word, ArgType]}, Data),
+                      aeser_api_encoder:encode(contract_bytearray, aeb_heap:to_binary(Args));
+                  _ ->
+                      {ok, [FateArgs]} = aeb_fate_abi:decode_calldata(binary_to_list(F), Data),
+                      aeser_api_encoder:encode(contract_bytearray, aeb_fate_encoding:serialize(FateArgs))
+              end
+           end,
+    maps:map(Enc, test_data()).
 
 get_api_version(_Config) ->
     {ok, 200, #{<<"api-version">> := Vsn}} = get_api_version(),
@@ -255,24 +386,25 @@ get_api(_Config) ->
 contract_dir() ->
     filename:join(code:lib_dir(aesophia_http), "../../extras/test/contracts").
 
-compile_test_contract(Name) ->
+compile_test_contract(Backend, Name) ->
     Dir = contract_dir(),
-    compile_test_contract(Dir, Name).
-
-compile_test_contract(Dir, Name) ->
-    compile_test_contract(Dir, Name, #{}).
+    compile_test_contract(Backend, Dir, Name, #{}).
 
 read_test_contract(Name) ->
     FileName = filename:join(contract_dir(), Name ++ ".aes"),
     file:read_file(FileName).
 
-compile_test_contract(Dir, Name, Opts) ->
+compile_test_contract(Backend, Dir, Name, Opts) ->
     FileName = filename:join(Dir, Name ++ ".aes"),
     {ok, SophiaCode} = file:read_file(FileName),
-    case get_contract_bytecode(SophiaCode, Opts) of
+    case get_contract_bytecode(SophiaCode, add_backend(Backend, Opts)) of
         {ok, 200, #{<<"bytecode">> := Code}} -> {ok, Code};
         {ok, 403, #{<<"reason">> := ErrMsg}} -> {error, ErrMsg}
     end.
+
+add_backend(default, Opts) -> Opts;
+add_backend(Backend, Opts) ->
+    Opts#{backend => atom_to_binary(Backend, utf8)}.
 
 create_aci(Name) ->
     Dir = contract_dir(),
@@ -293,24 +425,31 @@ decode_data(Type, EncodedData) ->
                                     data => EncodedData}),
     DecodedData.
 
-encode_calldata(Src, Fun, Args) ->
+encode_calldata(Backend, Src, Fun, Args) ->
+    encode_calldata(Backend, Src, Fun, Args, #{}).
+
+encode_calldata(Backend, Src, Fun, Args, Opts0) ->
+    Opts = #{source => list_to_binary(Src),
+             options => add_backend(Backend, Opts0),
+             function => list_to_binary(Fun),
+             arguments => lists:map(fun list_to_binary/1, Args)},
     {ok, 200, #{<<"calldata">> := Data}} =
-         get_encode_calldata(#{source => list_to_binary(Src),
-                               function => list_to_binary(Fun),
-                               arguments => lists:map(fun list_to_binary/1, Args)}),
+         get_encode_calldata(Opts),
     Data.
 
-do_decode_calldata_bytecode(Map) ->
+do_decode_calldata_bytecode(Backend, Map) ->
     {ok, 200, #{<<"function">> := FName, <<"arguments">> := Args}} =
-        get_decode_calldata_bytecode(Map),
+        get_decode_calldata_bytecode(add_backend(Backend, Map)),
     {FName, Args}.
 
-do_decode_calldata_source(Map) ->
+do_decode_calldata_source(Backend, Map0) ->
+    Map = Map0#{ options => add_backend(Backend, #{}) },
     {ok, 200, #{<<"function">> := FName, <<"arguments">> := Args}} =
         get_decode_calldata_source(Map),
     {FName, Args}.
 
-do_decode_call_result(Map) ->
+do_decode_call_result(Backend, Map0) ->
+    Map = Map0#{ options => add_backend(Backend, #{}) },
     {ok, 200, JsonValue} =
         get_decode_call_result(Map),
     JsonValue.
@@ -437,3 +576,6 @@ process_http_return(R) ->
         {error, _} = Error ->
             Error
     end.
+
+backend(Config) ->
+    proplists:get_value(backend, Config, default).
