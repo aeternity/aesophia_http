@@ -276,6 +276,10 @@ definitions:
   CompileOpts:
     type: object
     properties:
+      backend:
+        description: 'Compiler backend; fate | aevm'
+        type: string
+        enum: [fate, aevm]
       file_system:
         description: 'An explicit file system, mapping file names to file content'
         type: object
@@ -331,6 +335,8 @@ definitions:
       source:
         description: '(Possibly partial) Sophia contract code/interface'
         type: string
+      options:
+        $ref: '#/definitions/CompileOpts'
       function:
         description: 'Name of the called function'
         type: string
@@ -369,6 +375,8 @@ definitions:
       source:
         description: '(Possibly partial) Sophia contract code'
         type: string
+      options:
+        $ref: '#/definitions/CompileOpts'
       function:
         description: 'Name of function to call'
         type: string
@@ -390,20 +398,26 @@ definitions:
       bytecode:
         description: 'Compiled contract'
         $ref: '#/definitions/EncodedByteArray'
+      backend:
+        description: 'Compiler backend; fate | aevm'
+        type: string
+        enum: [fate, aevm]
     required:
       - calldata
       - bytecode
   DecodeCalldataSource:
     type: object
     properties:
+      source:
+        description: '(Possibly partial) Sophia contract code'
+        type: string
+      options:
+        $ref: '#/definitions/CompileOpts'
       calldata:
         description: 'Calldata to dissect'
         $ref: '#/definitions/EncodedByteArray'
       function:
         description: 'Name of the function to call'
-        type: string
-      source:
-        description: '(Possibly partial) Sophia contract code'
         type: string
     required:
       - calldata

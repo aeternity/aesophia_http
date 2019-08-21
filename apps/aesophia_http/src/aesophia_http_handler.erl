@@ -1,9 +1,15 @@
 -module(aesophia_http_handler).
 
+-include_lib("aebytecode/include/aeb_fate_data.hrl").
+
 -export([init/2,
          handle_request_json/2,content_types_provided/2,
          allowed_methods/2,content_types_accepted/2
         ]).
+
+-ifdef(TEST).
+-export([deserialize/1]).
+-endif.
 
 -record(state, { spec :: jsx:json_text()
                , validator :: jesse_state:state()
@@ -67,10 +73,10 @@ handle_request('EncodeCalldata', Req, _Context) ->
     case Req of
         #{'FunctionCallInput' :=
               #{ <<"source">>    := ContractCode
+               , <<"options">>   := Options
                , <<"function">>  := FunctionName
-               , <<"arguments">> := Arguments
-               }} ->
-            case encode_calldata(ContractCode, FunctionName, Arguments) of
+               , <<"arguments">> := Arguments } } ->
+            case encode_calldata(ContractCode, Options, FunctionName, Arguments) of
                 {ok, Result} ->
                     {200, [], #{calldata => Result}};
                 {error, ErrorMsg} ->
@@ -98,11 +104,12 @@ handle_request('DecodeCalldataBytecode', Req, _Context) ->
     case Req of
         #{ 'DecodeCalldataBytecode' :=
             #{ <<"calldata">> := EncodedCalldata,
-               <<"bytecode">> := EncodedBytecode } } ->
+               <<"bytecode">> := EncodedBytecode } = Json } ->
+            Backend = maps:get(<<"backend">>, Json, <<"default">>),
             case {aeser_api_encoder:safe_decode(contract_bytearray, EncodedCalldata),
                   aeser_api_encoder:safe_decode(contract_bytearray, EncodedBytecode)} of
                 {{ok, Calldata}, {ok, Bytecode}} ->
-                    decode_calldata_bytecode(Calldata, Bytecode);
+                    decode_calldata_bytecode(Calldata, Bytecode, Backend);
                 {{error, _}, _} ->
                     {403, [], #{reason => <<"Bad calldata">>}};
                 {_, {error, _}} ->
@@ -116,10 +123,11 @@ handle_request('DecodeCalldataSource', Req, _Context) ->
         #{ 'DecodeCalldataSource' :=
             #{ <<"calldata">> := EncodedCalldata,
                <<"function">> := FunName,
-               <<"source">>   := Source } } ->
+               <<"source">>   := Source,
+               <<"options">>  := Options } } ->
             case aeser_api_encoder:safe_decode(contract_bytearray, EncodedCalldata) of
                 {ok, Calldata} ->
-                    decode_calldata_source(Calldata, FunName, Source);
+                    decode_calldata_source(Calldata, FunName, Source, Options);
                 {error, _} ->
                     {403, [], #{reason => <<"Bad calldata">>}}
             end;
@@ -130,12 +138,13 @@ handle_request('DecodeCallResult', Req, _Context) ->
     case Req of
         #{ 'SophiaCallResultInput' :=
            #{ <<"source">>      := Source,
+              <<"options">>     := Options,
               <<"function">>    := FunName,
               <<"call-result">> := CallRes,
               <<"call-value">>  := EncodedCallValue } } ->
             case aeser_api_encoder:safe_decode(contract_bytearray, EncodedCallValue) of
                 {ok, CallValue} ->
-                    decode_call_result(Source, FunName, CallRes, CallValue);
+                    decode_call_result(Source, Options, FunName, CallRes, CallValue);
                 {error, _} ->
                     {403, [], #{reason => <<"Bad call-value">>}}
             end;
@@ -201,13 +210,20 @@ compile_options(Options) ->
     Map = maps:get(<<"file_system">>, Options, #{}),
     Map1 = maps:from_list([{binary_to_list(N), F} || {N, F} <- maps:to_list(Map)]),
     SrcFile = maps:get(<<"src_file">>, Options, no_file),
-    [{include, {explicit_files, Map1}}]
+    Backend = case binary_to_atom(maps:get(<<"backend">>, Options, <<"default">>), utf8) of
+                  aevm    -> aevm;
+                  fate    -> fate;
+                  default -> fate
+              end,
+    [{backend, Backend}, {include, {explicit_files, Map1}}]
       ++ [ {src_file, binary_to_list(SrcFile)} || SrcFile /= no_file ].
 
-encode_calldata(Source, Function, Arguments) ->
+encode_calldata(Source, Options, Function, Arguments) ->
+    COpts = compile_options(Options),
     case aeso_compiler:create_calldata(binary_to_list(Source),
                                        binary_to_list(Function),
-                                       lists:map(fun binary_to_list/1, Arguments)) of
+                                       lists:map(fun binary_to_list/1, Arguments),
+                                       COpts) of
         {ok, Calldata} ->
             {ok, aeser_api_encoder:encode(contract_bytearray, Calldata)};
         Err = {error, _} ->
@@ -253,15 +269,22 @@ parse_type(BinaryString) ->
             {error, unicode:characters_to_binary(atom_to_list(ErrorAtom))}
     end.
 
-decode_calldata_bytecode(Calldata, SerialBytecode) ->
+decode_calldata_bytecode(Calldata, SerialBytecode, BackendBin) ->
+    Backend = binary_to_atom(BackendBin, utf8),
     case deserialize(SerialBytecode) of
-        {ok, #{type_info := TypeInfo}} ->
-            decode_calldata_bytecode_(Calldata, TypeInfo);
+        %% Try a bit to be clever, if backend is not set - do some
+        %% rudimentary auto detection.
+        {ok, #{type_info := [], byte_code := Bytecode}} when Backend == default ->
+            decode_calldata_bytecode_(fate, Calldata, Bytecode);
+        {ok, #{type_info := TypeInfo}} when Backend == default; Backend == aevm ->
+            decode_calldata_bytecode_(aevm, Calldata, TypeInfo);
+        {ok, #{byte_code := Bytecode}} when Backend == fate ->
+            decode_calldata_bytecode_(fate, Calldata, Bytecode);
         {error, _} ->
             {403, [], #{reason => <<"Could not deserialize Bytecode">>}}
     end.
 
-decode_calldata_bytecode_(Calldata, TypeInfo) ->
+decode_calldata_bytecode_(aevm, Calldata, TypeInfo) ->
     case aeb_aevm_abi:get_function_hash_from_calldata(Calldata) of
         {ok, Hash} ->
             case {aeb_aevm_abi:function_name_from_type_hash(Hash, TypeInfo),
@@ -280,7 +303,29 @@ decode_calldata_bytecode_(Calldata, TypeInfo) ->
             end;
         {error, _} ->
             {403, [], #{reason => <<"Could not find function hash in Calldata">>}}
+    end;
+decode_calldata_bytecode_(fate, Calldata, SerBytecode) ->
+    try aeb_fate_code:deserialize(SerBytecode) of
+        Bytecode ->
+            case aeb_fate_encoding:deserialize(Calldata) of
+              {tuple, {FunHash, {tuple, TArgs}}} ->
+                  decode_calldata_fatecode(FunHash, tuple_to_list(TArgs), Bytecode);
+              _ ->
+                  {403, [], #{reason => <<"Bad Calldata">>}}
+            end
+    catch _:_ ->
+        {403, [], #{reason => <<"Could not deserialize FATE bytecode">>}}
     end.
+
+decode_calldata_fatecode(FunHash, Args, FCode) ->
+    case aeb_fate_abi:get_function_name_from_function_hash(FunHash, FCode) of
+        {ok, FunName} ->
+            {200, [], #{function => FunName,
+                        arguments => [fate_to_json(Arg) || Arg <- Args]}};
+        _ ->
+            {403, [], #{reason => <<"Could not find function hash in FATE bytecode">>}}
+    end.
+
 
 prepare_calldata_response(FunName, ArgType, VMArgs) ->
     try #{ <<"type">>  := <<"tuple">>,
@@ -291,10 +336,11 @@ prepare_calldata_response(FunName, ArgType, VMArgs) ->
         {403, [], #{reason => <<"Error preparing JSON">>}}
     end.
 
-decode_calldata_source(Calldata, FunName, Source) ->
+decode_calldata_source(Calldata, FunName, Source, Options) ->
+    COpts = compile_options(Options),
     case aeso_compiler:decode_calldata(binary_to_list(Source),
                                        binary_to_list(FunName),
-                                       Calldata) of
+                                       Calldata, COpts) of
         {ok, ArgTypes, Values} ->
             Ts = [ aeso_aci:json_encode_type(T) || T <- ArgTypes ],
             Vs = [ aeso_aci:json_encode_expr(V) || V <- Values ],
@@ -305,9 +351,10 @@ decode_calldata_source(Calldata, FunName, Source) ->
             {403, [], #{ reason => iolist_to_binary(E) }}
     end.
 
-decode_call_result(Source, FunName, CallRes, CallValue) ->
+decode_call_result(Source, Options, FunName, CallRes, CallValue) ->
+    COpts = compile_options(Options),
     case aeso_compiler:to_sophia_value(binary_to_list(Source), binary_to_list(FunName),
-                                       bin_to_res_atom(CallRes), CallValue) of
+                                       bin_to_res_atom(CallRes), CallValue, COpts) of
         {ok, Ast} ->
             {200, [], aeso_aci:json_encode_expr(Ast)};
         {error, E} ->
@@ -430,3 +477,23 @@ prepare_for_json(T, R) ->
     String = io_lib:format("Type: ~p Res:~p", [T,R]),
     Error = << <<B>> || B <- "Invalid VM-type: " ++ lists:flatten(String) >>,
     throw({error, Error}).
+
+jo(T, V) -> #{ <<"type">> => atom_to_binary(T, utf8), <<"value">> => V }.
+
+fate_to_json(?FATE_ADDRESS(Bin))  -> jo(address, aeser_api_encoder:encode(account_pubkey, Bin));
+fate_to_json(?FATE_ORACLE(Bin))   -> jo(oracle, aeser_api_encoder:encode(oracle_pubkey, Bin));
+fate_to_json(?FATE_ORACLE_Q(Bin)) -> jo(oracle_query, aeser_api_encoder:encode(oracle_query_id, Bin));
+fate_to_json(?FATE_CONTRACT(Bin)) -> jo(contract, aeser_api_encoder:encode(contract_pubkey, Bin));
+fate_to_json(?FATE_BYTES(Bin))    -> jo(bytes, aeser_api_encoder:encode(bytearray, Bin));
+fate_to_json(?FATE_BITS(Bin))     -> jo(bits, aeser_api_encoder:encode(bytearray, Bin));
+fate_to_json(N) when ?IS_FATE_INTEGER(N) -> jo(int, ?FATE_INTEGER_VALUE(N));
+fate_to_json(B) when ?IS_FATE_BOOLEAN(B) -> jo(bool, ?FATE_BOOLEAN_VALUE(B));
+fate_to_json(S) when ?IS_FATE_STRING(S)  -> jo(string, ?FATE_STRING_VALUE(S));
+fate_to_json(List) when ?IS_FATE_LIST(List) -> jo(list, [fate_to_json(X) || X <- ?FATE_LIST_VALUE(List)]);
+fate_to_json(?FATE_UNIT) -> jo(unit, <<>>);
+fate_to_json(?FATE_TUPLE(Val)) -> jo(tuple, [fate_to_json(X) || X <- tuple_to_list(Val)]);
+fate_to_json(Map) when ?IS_FATE_MAP(Map) -> jo(map, [ #{<<"key">> => fate_to_json(Key),
+                                                        <<"val">> => fate_to_json(Val)}
+                                                      || {Key, Val} <- maps:to_list(?FATE_MAP_VALUE(Map)) ]);
+fate_to_json({variant, _Ar, Tag, Args}) -> jo(variant, [Tag | [fate_to_json(Arg) || Arg <- tuple_to_list(Args)]]);
+fate_to_json(_Data) -> throw({cannot_translate_to_json, _Data}).
