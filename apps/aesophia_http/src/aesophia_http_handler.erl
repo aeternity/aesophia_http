@@ -7,10 +7,6 @@
          allowed_methods/2,content_types_accepted/2
         ]).
 
--ifdef(TEST).
--export([deserialize/1]).
--endif.
-
 -record(state, { spec :: jsx:json_text()
                , validator :: jesse_state:state()
                , operation_id :: atom() }).
@@ -201,7 +197,7 @@ compile_contract(Contract, Options) ->
     Opts = compile_options(Options),
     case aeso_compiler:from_string(binary_to_list(Contract), Opts) of
         {ok, Map} ->
-            {ok, serialize(Map)};
+            {ok, aeser_contract_code:serialize(Map)};
         Err = {error, _} ->
             Err
     end.
@@ -368,65 +364,6 @@ bin_to_res_atom(<<"ok">>)     -> ok;
 bin_to_res_atom(<<"revert">>) -> revert;
 bin_to_res_atom(<<"error">>)  -> error.
 
-
-%% -- Contract serialization
--define(SOPHIA_CONTRACT_VSN, 2).
--define(SOPHIA_CONTRACT_VSN_1, 1).
--define(COMPILER_SOPHIA_TAG, compiler_sophia).
-
-serialize(#{byte_code := ByteCode, type_info := TypeInfo,
-            contract_source := ContractString, compiler_version := Version}) ->
-    ContractBin      = list_to_binary(ContractString),
-    {ok, SourceHash} = eblake2:blake2b(32, ContractBin),
-    Fields = [ {source_hash, SourceHash}
-             , {type_info, TypeInfo}
-             , {byte_code, ByteCode}
-             , {compiler_version, Version} ],
-    aeser_chain_objects:serialize(?COMPILER_SOPHIA_TAG,
-                                  ?SOPHIA_CONTRACT_VSN,
-                                  serialization_template(?SOPHIA_CONTRACT_VSN),
-                                  Fields).
-
-deserialize(Binary) ->
-    case aeser_chain_objects:deserialize_type_and_vsn(Binary) of
-        {compiler_sophia = Type, ?SOPHIA_CONTRACT_VSN_1 = Vsn, _Rest} ->
-            Template = serialization_template(Vsn),
-            [ {source_hash, Hash}
-            , {type_info, TypeInfo}
-            , {byte_code, ByteCode}
-            ] = aeser_chain_objects:deserialize(Type, Vsn, Template, Binary),
-            {ok, #{ source_hash => Hash
-                  , type_info => TypeInfo
-                  , byte_code => ByteCode
-                  , contract_vsn => Vsn
-                  }};
-        {compiler_sophia = Type, ?SOPHIA_CONTRACT_VSN = Vsn, _Rest} ->
-            Template = serialization_template(Vsn),
-            [ {source_hash, Hash}
-            , {type_info, TypeInfo}
-            , {byte_code, ByteCode}
-            , {compiler_version, CompilerVersion}
-            ] = aeser_chain_objects:deserialize(Type, Vsn, Template, Binary),
-            {ok, #{ source_hash => Hash
-                  , type_info => TypeInfo
-                  , byte_code => ByteCode
-                  , compiler_version => CompilerVersion
-                  , contract_vsn => Vsn
-                  }};
-        Other ->
-            {error, {illegal_code_object, Other}}
-    end.
-
-serialization_template(?SOPHIA_CONTRACT_VSN_1) ->
-    [ {source_hash, binary}
-    , {type_info, [{binary, binary, binary, binary}]} %% {type hash, name, arg type, out type}
-    , {byte_code, binary} ];
-serialization_template(?SOPHIA_CONTRACT_VSN) ->
-    [ {source_hash, binary}
-    , {type_info, [{binary, binary, binary, binary}]} %% {type hash, name, arg type, out type}
-    , {byte_code, binary}
-    , {compiler_version, binary} ].
-
 to_headers(Headers) when is_list(Headers) ->
     maps:from_list(Headers).
 
@@ -434,6 +371,13 @@ to_error({Reason, Name, Info}) ->
     #{ reason => Reason,
        parameter => Name,
        info => Info }.
+
+deserialize(Bytecode) ->
+    try aeser_contract_code:deserialize(Bytecode) of
+        CodeMap -> {ok, CodeMap}
+    catch _E:R ->
+        {error, R}
+    end.
 
 %% -- JSON representation for typed VM-value
 prepare_for_json(word, Integer) when is_integer(Integer) ->

@@ -36,6 +36,7 @@ all() ->
     [ {group, contracts} %% default == {group, fate}
     , {group, fate}
     , {group, aevm}
+    , {group, admin}
     ].
 
 groups() ->
@@ -54,7 +55,9 @@ groups() ->
       , decode_calldata_bytecode
       , decode_calldata_source
       , decode_call_result
-      , get_api
+      ]},
+     {admin, [],
+      [ get_api
       , get_api_version
       , get_version
       ]}
@@ -347,7 +350,7 @@ bin_test_data(Backend) ->
     ContractSrc = binary_to_list(ContractSrcBin),
     {ok, Contract} = compile_test_contract(aevm, "calldata"),
     {ok, SerBytecode} = aeser_api_encoder:safe_decode(contract_bytearray, Contract),
-    {ok, #{type_info := TypeInfo}} = aesophia_http_handler:deserialize(SerBytecode),
+    #{type_info := TypeInfo} = aeser_contract_code:deserialize(SerBytecode),
 
     Enc = fun(F, V) ->
               EncData = encode_calldata(Backend, ContractSrc, binary_to_list(F), [V]),
@@ -367,7 +370,7 @@ bin_test_data(Backend) ->
 
 get_api_version(_Config) ->
     {ok, 200, #{<<"api-version">> := Vsn}} = get_api_version(),
-    ?assertMatch({X, X}, {Vsn, <<"3.2.0">>}),
+    ?assertMatch({X, X}, {Vsn, <<"4.0.0-rc1">>}),
 
     ok.
 
