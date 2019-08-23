@@ -36,6 +36,7 @@ all() ->
     [ {group, contracts} %% default == {group, fate}
     , {group, fate}
     , {group, aevm}
+    , {group, admin}
     ].
 
 groups() ->
@@ -54,7 +55,9 @@ groups() ->
       , decode_calldata_bytecode
       , decode_calldata_source
       , decode_call_result
-      , get_api
+      ]},
+     {admin, [],
+      [ get_api
       , get_api_version
       , get_version
       ]}
@@ -367,7 +370,7 @@ bin_test_data(Backend) ->
 
 get_api_version(_Config) ->
     {ok, 200, #{<<"api-version">> := Vsn}} = get_api_version(),
-    ?assertMatch({X, X}, {Vsn, <<"3.2.0">>}),
+    ?assertMatch({X, X}, {Vsn, <<"4.0.0-rc1">>}),
 
     ok.
 

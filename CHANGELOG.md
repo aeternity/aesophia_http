@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
+## [4.0.0-rc1] - 2019-08-23
+### Added
+- The compiler now supports both FATE and AEVM - therefore many of the APIs now have an
+  additional configuration field `backend` that can be either `fate` or `aevm` (`fate` is
+  the default). See the Swagger file for details.
+- Some of the APIs were missing the option to have a `filesystem` configuration option,
+  this has been corrected. Again, see the Swagger file for details.
+### Changed
+- Update to [Sophia 4.0.0-rc1](https://github.com/aeternity/aesophia/blob/master/CHANGELOG.md#400-rc1---2019-08-22)
+  Note: this version has implicit compilation of standard libraries and might come across
+  as a bit slow. This will be fixed before 4.0.0.
+### Removed
+
 ## [3.2.0] - 2019-06-28
 ### Added
 ### Changed
@@ -47,7 +60,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial HTTP interface: /aci, /compile, /decode-data, /encode-calldata, /version, /api-version, /api
 - Docker support (aeternity/aesophia_http)
 
-[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v3.2.0...HEAD
+[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v4.0.0-rc1...HEAD
+[4.0.0-rc1]: https://github.com/aeternity/aesophia_http/compare/v3.2.0...v4.0.0-rc1
 [3.2.0]: https://github.com/aeternity/aesophia_http/compare/v3.1.0...v3.2.0
 [3.1.0]: https://github.com/aeternity/aesophia_http/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/aeternity/aesophia_http/compare/v2.1.0...v3.0.0
