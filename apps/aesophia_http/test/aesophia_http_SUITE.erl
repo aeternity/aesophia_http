@@ -347,7 +347,7 @@ bin_test_data(Backend) ->
     ContractSrc = binary_to_list(ContractSrcBin),
     {ok, Contract} = compile_test_contract(aevm, "calldata"),
     {ok, SerBytecode} = aeser_api_encoder:safe_decode(contract_bytearray, Contract),
-    {ok, #{type_info := TypeInfo}} = aesophia_http_handler:deserialize(SerBytecode),
+    #{type_info := TypeInfo} = aeser_contract_code:deserialize(SerBytecode),
 
     Enc = fun(F, V) ->
               EncData = encode_calldata(Backend, ContractSrc, binary_to_list(F), [V]),
