@@ -11,7 +11,7 @@ FROM ubuntu:18.04
 COPY --from=builder /app/_build/prod/rel/aesophia_http /home/aeternity/aesophia_http
 
 # OpenSSL is shared lib dependency
-RUN apt-get -qq update && apt-get -qq -y install libssl1.0.0 curl \
+RUN apt-get -qq update && apt-get -qq -y install libssl1.0.0 curl libsodium23 \
     && ldconfig \
     && rm -rf /var/lib/apt/lists/*
 
