@@ -66,9 +66,9 @@ variable `$contract` to the contract definition:
 ```
 contract="contract SimpleStorage =
   record state = { data : int }
-  function init(value : int) : state = { data = value }
-  function get() : int = state.data
-  stateful function set(value : int) = put(state{data = value})"
+  entrypoint init(value : int) : state = { data = value }
+  entrypoint get() : int = state.data
+  stateful entrypoint set(value : int) = put(state{data = value})"
 ```
 
 ### Generating ACI
