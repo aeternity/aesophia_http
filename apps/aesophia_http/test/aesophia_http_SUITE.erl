@@ -111,7 +111,8 @@ identity_aci(_Config) ->
     ok.
 
 faulty_contract(Config) ->
-    {error, _Msg} = compile_test_contract(backend(Config), "faulty"),
+    {error, [Err]} = compile_test_contract(backend(Config), "faulty"),
+    ?assertMatch(#{ <<"type">> := <<"parse_error">> }, Err),
 
     ok.
 
@@ -402,7 +403,7 @@ compile_test_contract(Backend, Dir, Name, Opts) ->
     {ok, SophiaCode} = file:read_file(FileName),
     case get_contract_bytecode(SophiaCode, add_backend(Backend, Opts)) of
         {ok, 200, #{<<"bytecode">> := Code}} -> {ok, Code};
-        {ok, 403, #{<<"reason">> := ErrMsg}} -> {error, ErrMsg}
+        {ok, 403, Errors} -> {error, Errors}
     end.
 
 add_backend(default, Opts) -> Opts;

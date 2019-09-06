@@ -35,9 +35,9 @@ paths:
           schema:
             $ref: '#/definitions/Error'
         '403':
-          description: Invalid input
+          description: Compiler errors
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/CompilerErrors'
 
   /compile:
     post:
@@ -66,7 +66,7 @@ paths:
         '403':
           description: Invalid contract
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/CompilerErrors'
 
   /decode-data:
     post:
@@ -95,7 +95,7 @@ paths:
         '403':
           description: Invalid data
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/CompilerErrors'
 
   /decode-call-result:
     post:
@@ -124,7 +124,7 @@ paths:
         '403':
           description: Invalid data
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/CompilerErrors'
 
   /encode-calldata:
     post:
@@ -153,7 +153,7 @@ paths:
         '403':
           description: Invalid contract
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/CompilerErrors'
 
   /decode-calldata/bytecode:
     post:
@@ -211,7 +211,7 @@ paths:
         '403':
           description: Invalid data
           schema:
-            $ref: '#/definitions/Error'
+            $ref: '#/definitions/CompilerErrors'
 
   /version:
     get:
@@ -309,6 +309,37 @@ definitions:
         type: string
     required:
       - reason
+  CompilerErrors:
+    type: array
+    items:
+      $ref: '#/definitions/CompilerError'
+  CompilerError:
+    type: object
+    properties:
+      type:
+        type: string
+      pos:
+        $ref: '#/definitions/ErrorPos'
+      message:
+        type: string
+      context:
+        type: string
+    required:
+      - type
+      - pos
+      - message
+  ErrorPos:
+    type: object
+    properties:
+      file:
+        type: string
+      line:
+        type: integer
+      col:
+        type: integer
+    required:
+      - line
+      - col
   ACI:
     type: object
     properties:
