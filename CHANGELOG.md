@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
+## [4.0.0-rc3] - 2019-09-12
+### Added
+### Changed
+- The error reporting has been updated - see [Swagger file](https://github.com/aeternity/aesophia_http/blob/master/config/swagger.yaml)
+  for details.
+- Update to [Sophia 4.0.0-rc3](https://github.com/aeternity/aesophia/blob/master/CHANGELOG.md#400-rc3---2019-09-12)
+### Removed
+
 ## [4.0.0-rc1] - 2019-08-23
 ### Added
 - The compiler now supports both FATE and AEVM - therefore many of the APIs now have an
@@ -60,7 +68,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial HTTP interface: /aci, /compile, /decode-data, /encode-calldata, /version, /api-version, /api
 - Docker support (aeternity/aesophia_http)
 
-[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v4.0.0-rc1...HEAD
+[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v4.0.0-rc3...HEAD
+[4.0.0-rc3]: https://github.com/aeternity/aesophia_http/compare/v4.0.0-rc1...v4.0.0-rc3
 [4.0.0-rc1]: https://github.com/aeternity/aesophia_http/compare/v3.2.0...v4.0.0-rc1
 [3.2.0]: https://github.com/aeternity/aesophia_http/compare/v3.1.0...v3.2.0
 [3.1.0]: https://github.com/aeternity/aesophia_http/compare/v3.0.0...v3.1.0
