@@ -371,7 +371,7 @@ bin_test_data(Backend) ->
 
 get_api_version(_Config) ->
     {ok, 200, #{<<"api-version">> := Vsn}} = get_api_version(),
-    ?assertMatch({X, X}, {Vsn, <<"4.0.0-rc3">>}),
+    ?assertMatch({X, X}, {Vsn, <<"4.0.0-rc4">>}),
 
     ok.
 

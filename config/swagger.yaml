@@ -1,7 +1,7 @@
 swagger: '2.0'
 info:
   description: 'This is the [Aeternity](https://www.aeternity.com/) compiler API.'
-  version: 4.0.0-rc3
+  version: 4.0.0-rc4
   title: Aeternity node
   termsOfService: 'https://www.aeternity.com/terms/'
   contact:
