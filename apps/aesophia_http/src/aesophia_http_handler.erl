@@ -59,8 +59,10 @@ handle_request('CompileContract', Req, _Context) ->
             case compile_contract(Code, Options) of
                  {ok, ByteCode} ->
                      {200, [], #{bytecode => aeser_api_encoder:encode(contract_bytearray, ByteCode)}};
-                 {error, Errors} ->
-                     {403, [], mk_errors(Errors)}
+                 {error, Errors} when is_list(Errors) ->
+                     {403, [], mk_errors(Errors)};
+                 {error, Msg} when is_binary(Msg) ->
+                     {403, [], mk_error_msg(Msg)}
              end;
         _ -> {403, [], bad_request()}
     end;
@@ -154,12 +156,16 @@ handle_request('GenerateACI', Req, _Context) ->
               #{ <<"code">> := Code
                , <<"options">> := Options }} ->
             case generate_aci(Code, Options) of
-                 {ok, JsonACI, StringACI} ->
+                 {ok, JsonACI = [_ | _], StringACI} ->
                      {200, [],
                       #{encoded_aci => lists:last(JsonACI),
                         interface   => StringACI}};
-                 {error, Errors} ->
-                     {403, [], mk_errors(Errors)}
+                 {ok, [], _} ->
+                     {403, [], mk_error_msg(<<"ACI generator returned an empty result">>)};
+                 {error, Errors} when is_list(Errors) ->
+                     {403, [], mk_errors(Errors)};
+                 {error, Msg} when is_binary(Msg) ->
+                     {403, [], mk_error_msg(Msg)}
              end;
         _ -> {403, [], bad_request()}
     end;
@@ -185,21 +191,27 @@ handle_request('Api', _Req, #{ spec := Spec }) ->
 
 generate_aci(Contract, Options) ->
     Opts = compile_options(Options),
-    case aeso_aci:contract_interface(json, Contract, Opts) of
+    try aeso_aci:contract_interface(json, Contract, Opts) of
         {ok, JsonACI} ->
             {ok, StubACI} = aeso_aci:render_aci_json(JsonACI),
             {ok, JsonACI, StubACI};
         {error,_} = Err ->
             Err
+    catch _:R ->
+            Msg = io_lib:format("Compiler crashed, with reason: ~p\n~p\n", [R, erlang:get_stacktrace()]),
+            {error, erlang:iolist_to_binary(Msg)}
     end.
 
 compile_contract(Contract, Options) ->
     Opts = compile_options(Options),
-    case aeso_compiler:from_string(binary_to_list(Contract), Opts) of
+    try aeso_compiler:from_string(binary_to_list(Contract), Opts) of
         {ok, Map} ->
             {ok, aeser_contract_code:serialize(Map)};
         Err = {error, _} ->
             Err
+    catch _:R ->
+            Msg = io_lib:format("Compiler crashed, with reason: ~p\n~p\n", [R, erlang:get_stacktrace()]),
+            {error, erlang:iolist_to_binary(Msg)}
     end.
 
 compile_options(Options) ->
