@@ -27,6 +27,8 @@
         , decode_calldata_bytecode/1
         , decode_calldata_source/1
         , decode_call_result/1
+        , decode_call_result_bytecode/1
+        , decode_call_result_bytecode_not_ok/1
         , get_api/1
         , get_api_version/1
         , get_version/1
@@ -55,6 +57,8 @@ groups() ->
       , decode_calldata_bytecode
       , decode_calldata_source
       , decode_call_result
+      , decode_call_result_bytecode
+      , decode_call_result_bytecode_not_ok
       ]},
      {admin, [],
       [ get_api
@@ -203,80 +207,79 @@ decode_calldata_bytecode(Config) ->
     DoDec = fun(_F, Data) -> do_decode_calldata_bytecode(backend(Config), #{calldata => Data, bytecode => Contract}) end,
     Results = maps:map(DoDec, Datas),
 
-    Expects =
-        case backend(Config) of
-            aevm ->
-                #{ <<"a">> => [#{<<"type">> => <<"tuple">>,
-                                 <<"value">> => [#{<<"type">> => <<"word">>,<<"value">> => 42},
-                                                 #{<<"type">> => <<"word">>,<<"value">> => 1},
-                                                 #{<<"type">> => <<"string">>,<<"value">> => <<"Hello">>},
-                                                 #{<<"type">> => <<"tuple">>,<<"value">> => []}]}]
-                 , <<"b">> => [#{<<"type">> => <<"tuple">>,
-                                 <<"value">> => [#{<<"type">> => <<"variant">>, <<"value">> => [0, #{<<"type">> => <<"word">>,<<"value">> => 12},
-                                                                                                   #{<<"type">> => <<"word">>,<<"value">> => 18}]},
-                                                 #{<<"type">> => <<"variant">>,<<"value">> => [1]}]}]
-                 , <<"c">> => [#{<<"type">> => <<"tuple">>,
-                                 <<"value">> => [#{<<"type">> => <<"word">>,<<"value">> => 43},
-                                                 #{<<"type">> => <<"string">>,<<"value">> => <<"Foo">>},
-                                                 #{<<"type">> => <<"map">>, <<"value">> => [#{<<"key">> => #{<<"type">> => <<"word">>,<<"value">> => 1},
-                                                                                              <<"val">> => #{<<"type">> => <<"word">>, <<"value">> => 2}}]}]}]
-                 , <<"d">> => [#{<<"type">> => <<"tuple">>,
-                                 <<"value">> => [#{<<"type">> => <<"word">>, <<"value">> => 1766847064778384329583297500742918515827483896875618958121606201292619776},
-                                                 #{<<"type">> => <<"word">>, <<"value">> => 1780731860627700044960722568375367503147497605696303575386481456500965376},
-                                                 #{<<"type">> => <<"word">>, <<"value">> => 1780731860627700044960722568376592200742329637303199754547598369979440671},
-                                                 #{<<"type">> => <<"tuple">>, <<"value">> => [#{<<"type">> => <<"word">>, <<"value">> => 1780731860627700044960722568376592200742329637303199754547598369979440671},
-                                                                                              #{<<"type">> => <<"word">>, <<"value">> => 1780731860627700044960722568376592200742329637303199754547598369979440671},
-                                                                                              #{<<"type">> => <<"word">>, <<"value">> => 0}]}]}]
-                 , <<"e">> => [#{<<"type">> => <<"tuple">>,
-                                 <<"value">> => [#{<<"type">> => <<"word">>,<<"value">> => 1},
-                                                 #{<<"type">> => <<"word">>,<<"value">> => 2},
-                                                 #{<<"type">> => <<"word">>,<<"value">> => 3},
-                                                 #{<<"type">> => <<"word">>,<<"value">> => 4}]}]
-                 , <<"f">> => [#{<<"type">> => <<"list">>,
-                                 <<"value">> =>
-                                    [#{<<"type">> => <<"word">>,<<"value">> => 1},
-                                     #{<<"type">> => <<"word">>,<<"value">> => 2},
-                                     #{<<"type">> => <<"word">>,<<"value">> => 4},
-                                     #{<<"type">> => <<"word">>,<<"value">> => 8},
-                                     #{<<"type">> => <<"word">>,<<"value">> => 16}]}]
-                 };
-            _ ->
-                #{ <<"a">> => [#{<<"type">> => <<"tuple">>,
-                                 <<"value">> => [#{<<"type">> => <<"int">>,<<"value">> => 42},
-                                                 #{<<"type">> => <<"bool">>,<<"value">> => true},
-                                                 #{<<"type">> => <<"string">>,<<"value">> => <<"Hello">>},
-                                                 #{<<"type">> => <<"unit">>,<<"value">> => <<>>}]}]
-                 , <<"b">> => [#{<<"type">> => <<"tuple">>,
-                                 <<"value">> => [#{<<"type">> => <<"variant">>, <<"value">> => [0, #{<<"type">> => <<"int">>,<<"value">> => 12},
-                                                                                                   #{<<"type">> => <<"int">>,<<"value">> => 18}]},
-                                                 #{<<"type">> => <<"variant">>,<<"value">> => [1]}]}]
-                 , <<"c">> => [#{<<"type">> => <<"tuple">>,
-                                 <<"value">> => [#{<<"type">> => <<"int">>,<<"value">> => 43},
-                                                 #{<<"type">> => <<"string">>,<<"value">> => <<"Foo">>},
-                                                 #{<<"type">> => <<"map">>, <<"value">> => [#{<<"key">> => #{<<"type">> => <<"int">>,<<"value">> => 1},
-                                                                                              <<"val">> => #{<<"type">> => <<"int">>, <<"value">> => 2}}]}]}]
-                 , <<"d">> => [#{<<"type">> => <<"tuple">>,
-                                 <<"value">> => [#{<<"type">> => <<"bytes">>, <<"value">> => <<"ba_AAEYQB5m">>},
-                                                 #{<<"type">> => <<"bytes">>, <<"value">> => <<"ba_AAECAwQFBgcICQoLDA2sTJYu">>},
-                                                 #{<<"type">> => <<"bytes">>, <<"value">> => <<"ba_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8vKHtN">>},
-                                                 #{<<"type">> => <<"bytes">>, <<"value">> => <<"ba_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8AAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHwCpqpny">>}]}]
-                 , <<"e">> => [#{<<"type">> => <<"tuple">>,
-                                 <<"value">> => [#{<<"type">> => <<"oracle">>, <<"value">> => <<"ok_11111111111111111111111111111118qjnEr">>},
-                                                 #{<<"type">> => <<"oracle_query">>, <<"value">> => <<"oq_1111111111111111111111111111111Hrt6FG">>},
-                                                 #{<<"type">> => <<"contract">>, <<"value">> => <<"ct_1111111111111111111111111111111Rnzy1V">>},
-                                                 #{<<"type">> => <<"address">>, <<"value">> => <<"ak_1111111111111111111111111111111VcnZxy">>}]}]
-                 , <<"f">> => [#{<<"type">> => <<"list">>,
-                                 <<"value">> =>
-                                    [#{<<"type">> => <<"int">>,<<"value">> => 1},
-                                     #{<<"type">> => <<"int">>,<<"value">> => 2},
-                                     #{<<"type">> => <<"int">>,<<"value">> => 4},
-                                     #{<<"type">> => <<"int">>,<<"value">> => 8},
-                                     #{<<"type">> => <<"int">>,<<"value">> => 16}]}]
-                 }
-        end,
+    Expects = json_expect(backend(Config)),
 
     Check = fun(K) -> E = {K, maps:get(K, Expects)}, V = maps:get(K, Results), ?assertEqual(E, V) end,
     [ Check(K) || K <- maps:keys(Expects) ].
+
+json_expect(aevm) ->
+    #{ <<"a">> => [#{<<"type">> => <<"tuple">>,
+                     <<"value">> => [#{<<"type">> => <<"word">>,<<"value">> => 42},
+                                     #{<<"type">> => <<"word">>,<<"value">> => 1},
+                                     #{<<"type">> => <<"string">>,<<"value">> => <<"Hello">>},
+                                     #{<<"type">> => <<"tuple">>,<<"value">> => []}]}]
+     , <<"b">> => [#{<<"type">> => <<"tuple">>,
+                     <<"value">> => [#{<<"type">> => <<"variant">>, <<"value">> => [0, #{<<"type">> => <<"word">>,<<"value">> => 12},
+                                                                                       #{<<"type">> => <<"word">>,<<"value">> => 18}]},
+                                     #{<<"type">> => <<"variant">>,<<"value">> => [1]}]}]
+     , <<"c">> => [#{<<"type">> => <<"tuple">>,
+                     <<"value">> => [#{<<"type">> => <<"word">>,<<"value">> => 43},
+                                     #{<<"type">> => <<"string">>,<<"value">> => <<"Foo">>},
+                                     #{<<"type">> => <<"map">>, <<"value">> => [#{<<"key">> => #{<<"type">> => <<"word">>,<<"value">> => 1},
+                                                                                  <<"val">> => #{<<"type">> => <<"word">>, <<"value">> => 2}}]}]}]
+     , <<"d">> => [#{<<"type">> => <<"tuple">>,
+                     <<"value">> => [#{<<"type">> => <<"word">>, <<"value">> => 1766847064778384329583297500742918515827483896875618958121606201292619776},
+                                     #{<<"type">> => <<"word">>, <<"value">> => 1780731860627700044960722568375367503147497605696303575386481456500965376},
+                                     #{<<"type">> => <<"word">>, <<"value">> => 1780731860627700044960722568376592200742329637303199754547598369979440671},
+                                     #{<<"type">> => <<"tuple">>, <<"value">> => [#{<<"type">> => <<"word">>, <<"value">> => 1780731860627700044960722568376592200742329637303199754547598369979440671},
+                                                                                  #{<<"type">> => <<"word">>, <<"value">> => 1780731860627700044960722568376592200742329637303199754547598369979440671},
+                                                                                  #{<<"type">> => <<"word">>, <<"value">> => 0}]}]}]
+     , <<"e">> => [#{<<"type">> => <<"tuple">>,
+                     <<"value">> => [#{<<"type">> => <<"word">>,<<"value">> => 1},
+                                     #{<<"type">> => <<"word">>,<<"value">> => 2},
+                                     #{<<"type">> => <<"word">>,<<"value">> => 3},
+                                     #{<<"type">> => <<"word">>,<<"value">> => 4}]}]
+     , <<"f">> => [#{<<"type">> => <<"list">>,
+                     <<"value">> =>
+                        [#{<<"type">> => <<"word">>,<<"value">> => 1},
+                         #{<<"type">> => <<"word">>,<<"value">> => 2},
+                         #{<<"type">> => <<"word">>,<<"value">> => 4},
+                         #{<<"type">> => <<"word">>,<<"value">> => 8},
+                         #{<<"type">> => <<"word">>,<<"value">> => 16}]}]
+     };
+json_expect(Fate) when Fate == fate; Fate == default ->
+    #{ <<"a">> => [#{<<"type">> => <<"tuple">>,
+                     <<"value">> => [#{<<"type">> => <<"int">>,<<"value">> => 42},
+                                     #{<<"type">> => <<"bool">>,<<"value">> => true},
+                                     #{<<"type">> => <<"string">>,<<"value">> => <<"Hello">>},
+                                     #{<<"type">> => <<"unit">>,<<"value">> => <<>>}]}]
+     , <<"b">> => [#{<<"type">> => <<"tuple">>,
+                     <<"value">> => [#{<<"type">> => <<"variant">>, <<"value">> => [0, #{<<"type">> => <<"int">>,<<"value">> => 12},
+                                                                                       #{<<"type">> => <<"int">>,<<"value">> => 18}]},
+                                     #{<<"type">> => <<"variant">>,<<"value">> => [1]}]}]
+     , <<"c">> => [#{<<"type">> => <<"tuple">>,
+                     <<"value">> => [#{<<"type">> => <<"int">>,<<"value">> => 43},
+                                     #{<<"type">> => <<"string">>,<<"value">> => <<"Foo">>},
+                                     #{<<"type">> => <<"map">>, <<"value">> => [#{<<"key">> => #{<<"type">> => <<"int">>,<<"value">> => 1},
+                                                                                  <<"val">> => #{<<"type">> => <<"int">>, <<"value">> => 2}}]}]}]
+     , <<"d">> => [#{<<"type">> => <<"tuple">>,
+                     <<"value">> => [#{<<"type">> => <<"bytes">>, <<"value">> => <<"ba_AAEYQB5m">>},
+                                     #{<<"type">> => <<"bytes">>, <<"value">> => <<"ba_AAECAwQFBgcICQoLDA2sTJYu">>},
+                                     #{<<"type">> => <<"bytes">>, <<"value">> => <<"ba_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8vKHtN">>},
+                                     #{<<"type">> => <<"bytes">>, <<"value">> => <<"ba_AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8AAQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHwCpqpny">>}]}]
+     , <<"e">> => [#{<<"type">> => <<"tuple">>,
+                     <<"value">> => [#{<<"type">> => <<"oracle">>, <<"value">> => <<"ok_11111111111111111111111111111118qjnEr">>},
+                                     #{<<"type">> => <<"oracle_query">>, <<"value">> => <<"oq_1111111111111111111111111111111Hrt6FG">>},
+                                     #{<<"type">> => <<"contract">>, <<"value">> => <<"ct_1111111111111111111111111111111Rnzy1V">>},
+                                     #{<<"type">> => <<"address">>, <<"value">> => <<"ak_1111111111111111111111111111111VcnZxy">>}]}]
+     , <<"f">> => [#{<<"type">> => <<"list">>,
+                     <<"value">> =>
+                        [#{<<"type">> => <<"int">>,<<"value">> => 1},
+                         #{<<"type">> => <<"int">>,<<"value">> => 2},
+                         #{<<"type">> => <<"int">>,<<"value">> => 4},
+                         #{<<"type">> => <<"int">>,<<"value">> => 8},
+                         #{<<"type">> => <<"int">>,<<"value">> => 16}]}]
+     }.
 
 decode_calldata_source(Config) ->
     {ok, ContractSrcBin} = read_test_contract("calldata"),
@@ -334,6 +337,43 @@ decode_call_result(Config) ->
 
     Check = fun(K) -> E = maps:get(K, Expects), V = maps:get(K, Results), ?assertEqual({K, E}, {K, V}) end,
     [ Check(K) || K <- maps:keys(Expects) ].
+
+decode_call_result_bytecode(Config) ->
+    {ok, Contract} = compile_test_contract(backend(Config), "callresult"),
+
+    Values = bin_test_data(backend(Config)),
+
+    DoDec = fun(K, V) -> do_decode_call_result_bytecode(
+                           backend(Config), #{bytecode => Contract, function => K,
+                                              'call-result' => <<"ok">>, 'call-value' => V}) end,
+    Results = maps:map(DoDec, Values),
+    Expects = json_expect(backend(Config)),
+
+    Check = fun(K) -> [E] = maps:get(K, Expects), V = maps:get(K, Results), ?assertEqual({K, E}, V) end,
+    [ Check(K) || K <- maps:keys(Expects) ].
+
+decode_call_result_bytecode_not_ok(Config) ->
+    {ok, Contract} = compile_test_contract(backend(Config), "callresult"),
+    Map0 = #{bytecode => Contract, function => <<"foo">>},
+
+    ErrVal = aeser_api_encoder:encode(contract_bytearray, <<"An error happened!">>),
+    {_, Res1} = do_decode_call_result_bytecode(backend(Config), Map0#{'call-result' => <<"error">>,
+                                                                      'call-value'  => ErrVal}),
+
+    ?assertMatch({X, X}, {#{<<"error">> => [<<"An error happened!">>]}, Res1}),
+
+    RetVal0 = case backend(Config) of
+                  aevm -> aeb_heap:to_binary(<<"An error happened!">>);
+                  _    -> aeb_fate_encoding:serialize(<<"An error happened!">>)
+              end,
+    RetVal = aeser_api_encoder:encode(contract_bytearray, RetVal0),
+    {_, Res2} = do_decode_call_result_bytecode(backend(Config), Map0#{'call-result' => <<"revert">>,
+                                                                      'call-value'  => RetVal}),
+
+    ?assertMatch({X, X}, {#{<<"abort">> => [<<"An error happened!">>]}, Res2}),
+    ok.
+
+
 
 test_data() ->
     #{ <<"a">> => "(42, true, \"Hello\", ())"
@@ -458,6 +498,11 @@ do_decode_call_result(Backend, Map0) ->
         get_decode_call_result(Map),
     JsonValue.
 
+do_decode_call_result_bytecode(Backend, Map) ->
+    {ok, 200, #{<<"function">> := FName, <<"result">> := JsonValue}} =
+        get_decode_call_result_bytecode(add_backend(Backend, Map)),
+    {FName, JsonValue}.
+
 %% ============================================================
 %% HTTP Requests
 %% Note that some are internal and some are external!
@@ -492,6 +537,10 @@ get_decode_calldata_source(Request) ->
 get_decode_call_result(Request) ->
     Host = internal_address(),
     http_request(Host, post, "decode-call-result", Request).
+
+get_decode_call_result_bytecode(Request) ->
+    Host = internal_address(),
+    http_request(Host, post, "decode-call-result/bytecode", Request).
 
 get_api_version() ->
     Host = internal_address(),

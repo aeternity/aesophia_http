@@ -150,6 +150,29 @@ handle_request('DecodeCallResult', Req, _Context) ->
             {403, [], bad_request()}
     end;
 
+handle_request('DecodeCallResultBytecode', Req, _Context) ->
+    case Req of
+        #{ 'BytecodeCallResultInput' :=
+            #{ <<"function">>    := FunName,
+               <<"call-result">> := CallRes0,
+               <<"call-value">>  := EncodedCallValue,
+               <<"bytecode">>    := EncodedBytecode } = Json } ->
+            Backend0 = maps:get(<<"backend">>, Json, <<"fate">>),
+            Backend  = binary_to_atom(Backend0, utf8),
+            CallRes  = binary_to_atom(CallRes0, utf8),
+            case {aeser_api_encoder:safe_decode(contract_bytearray, EncodedCallValue),
+                  aeser_api_encoder:safe_decode(contract_bytearray, EncodedBytecode)} of
+                {{ok, CallValue}, {ok, Bytecode}} ->
+                    decode_callresult_bytecode(CallRes, CallValue, FunName, Bytecode, Backend);
+                {{error, _}, _} ->
+                    {403, [], mk_error_msg(<<"Bad callvalue">>)};
+                {_, {error, _}} ->
+                    {403, [], mk_error_msg(<<"Bad bytecode">>)}
+            end;
+        _ -> {403, [], bad_request()}
+    end;
+
+
 handle_request('GenerateACI', Req, _Context) ->
     case Req of
         #{'Contract' :=
@@ -275,6 +298,56 @@ parse_type(BinaryString) ->
         {ok, _Type} = R -> R;
         {error, ErrorAtom} ->
             {error, unicode:characters_to_binary(atom_to_list(ErrorAtom))}
+    end.
+
+decode_callresult_bytecode(ErrOrRevert, CallValue, FunName, _Bytecode, Backend)
+        when ErrOrRevert == error; ErrOrRevert == revert ->
+    case aeso_compiler:to_sophia_value("", "", ErrOrRevert, CallValue, [{backend, Backend}]) of
+        {ok, Ast} ->
+            {200, [], #{function => FunName, result => aeso_aci:json_encode_expr(Ast)}};
+        {error, Es} ->
+            {403, [], mk_errors(Es)}
+    end;
+decode_callresult_bytecode(ok, CallValue, FunName, SerialBytecode, Backend) ->
+    case deserialize(SerialBytecode) of
+        {ok, #{byte_code := Bytecode}} when Backend == fate ->
+            decode_callresult_bytecode_fate(CallValue, FunName, Bytecode);
+        {ok, #{type_info := TypeInfo}} when Backend == aevm ->
+            decode_callresult_bytecode_aevm(CallValue, FunName, TypeInfo);
+        {ok, _} ->
+            {403, [], mk_error_msg(<<"Bad backend - 'fate' or 'aevm' allowed only">>)};
+        {error, _} ->
+            {403, [], mk_error_msg(<<"Could not deserialize Bytecode">>)}
+    end.
+
+decode_callresult_bytecode_aevm(CallValue, FunName, TypeInfo) ->
+    case aeb_aevm_abi:type_hash_from_function_name(FunName, TypeInfo) of
+        {ok, Hash} ->
+            case aeb_aevm_abi:typereps_from_type_hash(Hash, TypeInfo) of
+                {ok, _, ResType} ->
+                    case aeb_heap:from_binary(ResType, CallValue) of
+                        {ok, VMRes} ->
+                            try JsonRes = prepare_for_json(ResType, VMRes),
+                                {200, [], #{function => FunName, result => JsonRes}}
+                            catch _:_ ->
+                                {403, [], mk_error_msg(<<"Error preparing JSON">>)}
+                            end;
+                        {error, _} ->
+                            {403, [], mk_error_msg(<<"Could not interpret CallValue as heap">>)}
+                    end;
+                {error, _} ->
+                    {403, [], mk_error_msg(<<"Could not encode typerep for result type">>)}
+            end;
+        {error, _} ->
+            {403, [], mk_error_msg(<<"Bad function name, not found in bytecode">>)}
+    end.
+
+decode_callresult_bytecode_fate(CallValue, FunName, _SerBytecode) ->
+    try aeb_fate_encoding:deserialize(CallValue) of
+        Result ->
+            {200, [], #{function => FunName, result => fate_to_json(Result)}}
+    catch _:_ ->
+        {403, [], mk_error_msg(<<"Could not deserialize CallValue">>)}
     end.
 
 decode_calldata_bytecode(Calldata, SerialBytecode, BackendBin) ->
