@@ -443,7 +443,7 @@ compile_test_contract(Backend, Dir, Name, Opts) ->
     {ok, SophiaCode} = file:read_file(FileName),
     case get_contract_bytecode(SophiaCode, add_backend(Backend, Opts)) of
         {ok, 200, #{<<"bytecode">> := Code}} -> {ok, Code};
-        {ok, 403, Errors} -> {error, Errors}
+        {ok, 400, Errors} -> {error, Errors}
     end.
 
 add_backend(default, Opts) -> Opts;

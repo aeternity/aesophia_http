@@ -60,11 +60,11 @@ handle_request('CompileContract', Req, _Context) ->
                  {ok, ByteCode} ->
                      {200, [], #{bytecode => aeser_api_encoder:encode(contract_bytearray, ByteCode)}};
                  {error, Errors} when is_list(Errors) ->
-                     {403, [], mk_errors(Errors)};
+                     {400, [], mk_errors(Errors)};
                  {error, Msg} when is_binary(Msg) ->
-                     {403, [], mk_error_msg(Msg)}
+                     {400, [], mk_error_msg(Msg)}
              end;
-        _ -> {403, [], bad_request()}
+        _ -> {400, [], bad_request()}
     end;
 
 handle_request('EncodeCalldata', Req, _Context) ->
@@ -78,9 +78,9 @@ handle_request('EncodeCalldata', Req, _Context) ->
                 {ok, Result} ->
                     {200, [], #{calldata => Result}};
                 {error, Errors} ->
-                    {403, [], mk_errors(Errors)}
+                    {400, [], mk_errors(Errors)}
             end;
-        _ -> {403, [], bad_request()}
+        _ -> {400, [], bad_request()}
     end;
 
 handle_request('DecodeData', Req, _Context) ->
@@ -93,9 +93,9 @@ handle_request('DecodeData', Req, _Context) ->
                 {ok, Result} ->
                     {200, [], #{data => Result}};
                 {error, Error} ->
-                    {403, [], mk_error_msg(Error)}
+                    {400, [], mk_error_msg(Error)}
             end;
-        _ -> {403, [], bad_request()}
+        _ -> {400, [], bad_request()}
     end;
 
 handle_request('DecodeCalldataBytecode', Req, _Context) ->
@@ -109,11 +109,11 @@ handle_request('DecodeCalldataBytecode', Req, _Context) ->
                 {{ok, Calldata}, {ok, Bytecode}} ->
                     decode_calldata_bytecode(Calldata, Bytecode, Backend);
                 {{error, _}, _} ->
-                    {403, [], mk_error_msg(<<"Bad calldata">>)};
+                    {400, [], mk_error_msg(<<"Bad calldata">>)};
                 {_, {error, _}} ->
-                    {403, [], mk_error_msg(<<"Bad bytecode">>)}
+                    {400, [], mk_error_msg(<<"Bad bytecode">>)}
             end;
-        _ -> {403, [], bad_request()}
+        _ -> {400, [], bad_request()}
     end;
 
 handle_request('DecodeCalldataSource', Req, _Context) ->
@@ -127,9 +127,9 @@ handle_request('DecodeCalldataSource', Req, _Context) ->
                 {ok, Calldata} ->
                     decode_calldata_source(Calldata, FunName, Source, Options);
                 {error, _} ->
-                    {403, [], mk_error_msg(<<"Bad calldata">>)}
+                    {400, [], mk_error_msg(<<"Bad calldata">>)}
             end;
-        _ -> {403, [], bad_request()}
+        _ -> {400, [], bad_request()}
     end;
 
 handle_request('DecodeCallResult', Req, _Context) ->
@@ -144,10 +144,10 @@ handle_request('DecodeCallResult', Req, _Context) ->
                 {ok, CallValue} ->
                     decode_call_result(Source, Options, FunName, CallRes, CallValue);
                 {error, _} ->
-                    {403, [], mk_error_msg(<<"Bad call-value">>)}
+                    {400, [], mk_error_msg(<<"Bad call-value">>)}
             end;
         _ ->
-            {403, [], bad_request()}
+            {400, [], bad_request()}
     end;
 
 handle_request('DecodeCallResultBytecode', Req, _Context) ->
@@ -165,11 +165,11 @@ handle_request('DecodeCallResultBytecode', Req, _Context) ->
                 {{ok, CallValue}, {ok, Bytecode}} ->
                     decode_callresult_bytecode(CallRes, CallValue, FunName, Bytecode, Backend);
                 {{error, _}, _} ->
-                    {403, [], mk_error_msg(<<"Bad callvalue">>)};
+                    {400, [], mk_error_msg(<<"Bad callvalue">>)};
                 {_, {error, _}} ->
-                    {403, [], mk_error_msg(<<"Bad bytecode">>)}
+                    {400, [], mk_error_msg(<<"Bad bytecode">>)}
             end;
-        _ -> {403, [], bad_request()}
+        _ -> {400, [], bad_request()}
     end;
 
 
@@ -184,13 +184,13 @@ handle_request('GenerateACI', Req, _Context) ->
                       #{encoded_aci => lists:last(JsonACI),
                         interface   => StringACI}};
                  {ok, [], _} ->
-                     {403, [], mk_error_msg(<<"ACI generator returned an empty result">>)};
+                     {400, [], mk_error_msg(<<"ACI generator returned an empty result">>)};
                  {error, Errors} when is_list(Errors) ->
-                     {403, [], mk_errors(Errors)};
+                     {400, [], mk_errors(Errors)};
                  {error, Msg} when is_binary(Msg) ->
-                     {403, [], mk_error_msg(Msg)}
+                     {400, [], mk_error_msg(Msg)}
              end;
-        _ -> {403, [], bad_request()}
+        _ -> {400, [], bad_request()}
     end;
 
 handle_request('Version', _Req, _Context) ->
@@ -306,7 +306,7 @@ decode_callresult_bytecode(ErrOrRevert, CallValue, FunName, _Bytecode, Backend)
         {ok, Ast} ->
             {200, [], #{function => FunName, result => aeso_aci:json_encode_expr(Ast)}};
         {error, Es} ->
-            {403, [], mk_errors(Es)}
+            {400, [], mk_errors(Es)}
     end;
 decode_callresult_bytecode(ok, CallValue, FunName, SerialBytecode, Backend) ->
     case deserialize(SerialBytecode) of
@@ -315,9 +315,9 @@ decode_callresult_bytecode(ok, CallValue, FunName, SerialBytecode, Backend) ->
         {ok, #{type_info := TypeInfo}} when Backend == aevm ->
             decode_callresult_bytecode_aevm(CallValue, FunName, TypeInfo);
         {ok, _} ->
-            {403, [], mk_error_msg(<<"Bad backend - 'fate' or 'aevm' allowed only">>)};
+            {400, [], mk_error_msg(<<"Bad backend - 'fate' or 'aevm' allowed only">>)};
         {error, _} ->
-            {403, [], mk_error_msg(<<"Could not deserialize Bytecode">>)}
+            {400, [], mk_error_msg(<<"Could not deserialize Bytecode">>)}
     end.
 
 decode_callresult_bytecode_aevm(CallValue, FunName, TypeInfo) ->
@@ -330,16 +330,16 @@ decode_callresult_bytecode_aevm(CallValue, FunName, TypeInfo) ->
                             try JsonRes = prepare_for_json(ResType, VMRes),
                                 {200, [], #{function => FunName, result => JsonRes}}
                             catch _:_ ->
-                                {403, [], mk_error_msg(<<"Error preparing JSON">>)}
+                                {400, [], mk_error_msg(<<"Error preparing JSON">>)}
                             end;
                         {error, _} ->
-                            {403, [], mk_error_msg(<<"Could not interpret CallValue as heap">>)}
+                            {400, [], mk_error_msg(<<"Could not interpret CallValue as heap">>)}
                     end;
                 {error, _} ->
-                    {403, [], mk_error_msg(<<"Could not encode typerep for result type">>)}
+                    {400, [], mk_error_msg(<<"Could not encode typerep for result type">>)}
             end;
         {error, _} ->
-            {403, [], mk_error_msg(<<"Bad function name, not found in bytecode">>)}
+            {400, [], mk_error_msg(<<"Bad function name, not found in bytecode">>)}
     end.
 
 decode_callresult_bytecode_fate(CallValue, FunName, _SerBytecode) ->
@@ -347,7 +347,7 @@ decode_callresult_bytecode_fate(CallValue, FunName, _SerBytecode) ->
         Result ->
             {200, [], #{function => FunName, result => fate_to_json(Result)}}
     catch _:_ ->
-        {403, [], mk_error_msg(<<"Could not deserialize CallValue">>)}
+        {400, [], mk_error_msg(<<"Could not deserialize CallValue">>)}
     end.
 
 decode_calldata_bytecode(Calldata, SerialBytecode, BackendBin) ->
@@ -362,7 +362,7 @@ decode_calldata_bytecode(Calldata, SerialBytecode, BackendBin) ->
         {ok, #{byte_code := Bytecode}} when Backend == fate ->
             decode_calldata_bytecode_(fate, Calldata, Bytecode);
         {error, _} ->
-            {403, [], mk_error_msg(<<"Could not deserialize Bytecode">>)}
+            {400, [], mk_error_msg(<<"Could not deserialize Bytecode">>)}
     end.
 
 decode_calldata_bytecode_(aevm, Calldata, TypeInfo) ->
@@ -375,15 +375,15 @@ decode_calldata_bytecode_(aevm, Calldata, TypeInfo) ->
                         {ok, {_Hash, VMArgs}} ->
                             prepare_calldata_response(FunName, ArgType, VMArgs);
                         {error, _} ->
-                            {403, [], mk_error_msg(<<"Could not interpret Calldata as heap">>)}
+                            {400, [], mk_error_msg(<<"Could not interpret Calldata as heap">>)}
                     end;
                 {{error, _}, _} ->
-                    {403, [], mk_error_msg(<<"Could not find function hash in Typeinfo">>)};
+                    {400, [], mk_error_msg(<<"Could not find function hash in Typeinfo">>)};
                 {_, {error, _}} ->
-                    {403, [], mk_error_msg(<<"Could not encode typerep for Arguments">>)}
+                    {400, [], mk_error_msg(<<"Could not encode typerep for Arguments">>)}
             end;
         {error, _} ->
-            {403, [], mk_error_msg(<<"Could not find function hash in Calldata">>)}
+            {400, [], mk_error_msg(<<"Could not find function hash in Calldata">>)}
     end;
 decode_calldata_bytecode_(fate, Calldata, SerBytecode) ->
     try aeb_fate_code:deserialize(SerBytecode) of
@@ -392,10 +392,10 @@ decode_calldata_bytecode_(fate, Calldata, SerBytecode) ->
               {tuple, {FunHash, {tuple, TArgs}}} ->
                   decode_calldata_fatecode(FunHash, tuple_to_list(TArgs), Bytecode);
               _ ->
-                  {403, [], mk_error_msg(<<"Bad Calldata">>)}
+                  {400, [], mk_error_msg(<<"Bad Calldata">>)}
             end
     catch _:_ ->
-        {403, [], mk_error_msg(<<"Could not deserialize FATE bytecode">>)}
+        {400, [], mk_error_msg(<<"Could not deserialize FATE bytecode">>)}
     end.
 
 decode_calldata_fatecode(FunHash, Args, FCode) ->
@@ -404,7 +404,7 @@ decode_calldata_fatecode(FunHash, Args, FCode) ->
             {200, [], #{function => FunName,
                         arguments => [fate_to_json(Arg) || Arg <- Args]}};
         _ ->
-            {403, [], mk_error_msg(<<"Could not find function hash in FATE bytecode">>)}
+            {400, [], mk_error_msg(<<"Could not find function hash in FATE bytecode">>)}
     end.
 
 
@@ -414,7 +414,7 @@ prepare_calldata_response(FunName, ArgType, VMArgs) ->
         {200, [], #{ function  => FunName,
                      arguments => ArgsList }}
     catch _:_Reason ->
-        {403, [], mk_error_msg(<<"Error preparing JSON">>)}
+        {400, [], mk_error_msg(<<"Error preparing JSON">>)}
     end.
 
 decode_calldata_source(Calldata, FunName, Source, Options) ->
@@ -429,7 +429,7 @@ decode_calldata_source(Calldata, FunName, Source, Options) ->
                        , arguments => [ #{ type => T, value => V }
                                         || {T, V} <- lists:zip(Ts, Vs) ] }};
         {error, Es} ->
-            {403, [], mk_errors(Es)}
+            {400, [], mk_errors(Es)}
     end.
 
 decode_call_result(Source, Options, FunName, CallRes, CallValue) ->
@@ -439,7 +439,7 @@ decode_call_result(Source, Options, FunName, CallRes, CallValue) ->
         {ok, Ast} ->
             {200, [], aeso_aci:json_encode_expr(Ast)};
         {error, Es} ->
-            {403, [], mk_errors(Es)}
+            {400, [], mk_errors(Es)}
     end.
 
 
@@ -530,7 +530,7 @@ fate_to_json(_Data) -> throw({cannot_translate_to_json, _Data}).
 mk_errors(Errors) -> [ aeso_errors:to_json(E) || E <- Errors ].
 
 bad_request() ->
-  mk_error_msg(<<"Bad request">>).
+    #{reason => <<"Bad request">>}.
 
 mk_error_msg(Msg) ->
-  [#{ type => <<"data_error">>, pos => #{ line => 0, col => 0 }, message => Msg }].
+    [#{ type => <<"data_error">>, pos => #{ line => 0, col => 0 }, message => Msg }].

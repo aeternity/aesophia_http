@@ -34,7 +34,7 @@ paths:
           description: Invalid input
           schema:
             $ref: '#/definitions/Error'
-        '403':
+        '400':
           description: Compiler errors
           schema:
             $ref: '#/definitions/CompilerErrors'
@@ -63,7 +63,7 @@ paths:
           description: Invalid data
           schema:
             $ref: '#/definitions/Error'
-        '403':
+        '400':
           description: Invalid contract
           schema:
             $ref: '#/definitions/CompilerErrors'
@@ -92,7 +92,7 @@ paths:
           description: Invalid data
           schema:
             $ref: '#/definitions/Error'
-        '403':
+        '400':
           description: Invalid data
           schema:
             $ref: '#/definitions/CompilerErrors'
@@ -121,7 +121,7 @@ paths:
           description: Invalid data
           schema:
             $ref: '#/definitions/Error'
-        '403':
+        '400':
           description: Invalid data
           schema:
             $ref: '#/definitions/CompilerErrors'
@@ -150,7 +150,7 @@ paths:
           description: Invalid data
           schema:
             $ref: '#/definitions/Error'
-        '403':
+        '400':
           description: Invalid data
           schema:
             $ref: '#/definitions/CompilerErrors'
@@ -179,7 +179,7 @@ paths:
           description: Invalid data
           schema:
             $ref: '#/definitions/Error'
-        '403':
+        '400':
           description: Invalid contract
           schema:
             $ref: '#/definitions/CompilerErrors'
@@ -208,7 +208,7 @@ paths:
           description: Invalid data
           schema:
             $ref: '#/definitions/Error'
-        '403':
+        '400':
           description: Invalid contract
           schema:
             $ref: '#/definitions/Error'
@@ -237,7 +237,7 @@ paths:
           description: Invalid data
           schema:
             $ref: '#/definitions/Error'
-        '403':
+        '400':
           description: Invalid data
           schema:
             $ref: '#/definitions/CompilerErrors'
@@ -285,7 +285,7 @@ paths:
           description: 'API description'
           schema:
             $ref: '#/definitions/API'
-        '403':
+        '400':
           description: 'Error'
           schema:
             $ref: '#/definitions/Error'
