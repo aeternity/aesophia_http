@@ -34,7 +34,7 @@ paths:
           description: Invalid input
           schema:
             $ref: '#/definitions/Error'
-        '403':
+        '400':
           description: Compiler errors
           schema:
             $ref: '#/definitions/CompilerErrors'
@@ -63,7 +63,7 @@ paths:
           description: Invalid data
           schema:
             $ref: '#/definitions/Error'
-        '403':
+        '400':
           description: Invalid contract
           schema:
             $ref: '#/definitions/CompilerErrors'
@@ -92,7 +92,7 @@ paths:
           description: Invalid data
           schema:
             $ref: '#/definitions/Error'
-        '403':
+        '400':
           description: Invalid data
           schema:
             $ref: '#/definitions/CompilerErrors'
@@ -121,7 +121,36 @@ paths:
           description: Invalid data
           schema:
             $ref: '#/definitions/Error'
-        '403':
+        '400':
+          description: Invalid data
+          schema:
+            $ref: '#/definitions/CompilerErrors'
+
+  /decode-call-result/bytecode:
+    post:
+      operationId: 'DecodeCallResultBytecode'
+      description: 'Decode the result of contract call from Bytecode'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: Call result + compiled contract
+          required: true
+          schema:
+            $ref: '#/definitions/BytecodeCallResultInput'
+      responses:
+        '200':
+          description: Json encoded data
+          schema:
+            $ref: '#/definitions/DecodedCallresult'
+        '400':
+          description: Invalid data
+          schema:
+            $ref: '#/definitions/Error'
+        '400':
           description: Invalid data
           schema:
             $ref: '#/definitions/CompilerErrors'
@@ -150,7 +179,7 @@ paths:
           description: Invalid data
           schema:
             $ref: '#/definitions/Error'
-        '403':
+        '400':
           description: Invalid contract
           schema:
             $ref: '#/definitions/CompilerErrors'
@@ -179,7 +208,7 @@ paths:
           description: Invalid data
           schema:
             $ref: '#/definitions/Error'
-        '403':
+        '400':
           description: Invalid contract
           schema:
             $ref: '#/definitions/Error'
@@ -208,7 +237,7 @@ paths:
           description: Invalid data
           schema:
             $ref: '#/definitions/Error'
-        '403':
+        '400':
           description: Invalid data
           schema:
             $ref: '#/definitions/CompilerErrors'
@@ -256,7 +285,7 @@ paths:
           description: 'API description'
           schema:
             $ref: '#/definitions/API'
-        '403':
+        '400':
           description: 'Error'
           schema:
             $ref: '#/definitions/Error'
@@ -420,6 +449,30 @@ definitions:
       - source
       - function
       - arguments
+  BytecodeCallResultInput:
+    type: object
+    properties:
+      bytecode:
+        description: 'Compiled contract'
+        $ref: '#/definitions/EncodedByteArray'
+      function:
+        description: 'Name of the called function'
+        type: string
+      call-result:
+        description: 'Call result type (ok | revert | error)'
+        type: string
+      call-value:
+        description: 'Call result value (ABI encoded data or error string)'
+        type: string
+      backend:
+        description: 'Compiler backend; fate | aevm'
+        type: string
+        enum: [fate, aevm]
+    required:
+      - function
+      - call-result
+      - call-value
+      - bytecode
   DecodeCalldataBytecode:
     type: object
     properties:
@@ -454,6 +507,16 @@ definitions:
       - calldata
       - function
       - source
+  DecodedCallresult:
+    type: object
+    properties:
+      function:
+        type: string
+      result:
+        type: object
+    required:
+      - function
+      - result
   DecodedCalldata:
     type: object
     properties:
