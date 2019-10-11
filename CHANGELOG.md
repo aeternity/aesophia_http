@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
+## [4.0.0] - 2019-10-11
+### Added
+### Changed
+- Update to [Sophia 4.0.0](https://github.com/aeternity/aesophia/blob/master/CHANGELOG.md#400---2019-10-11)
+### Removed
+
 ## [4.0.0-rc5] - 2019-09-27
 ### Added
 - Added the endpoint `decode-call-result/bytecode`
@@ -81,7 +87,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial HTTP interface: /aci, /compile, /decode-data, /encode-calldata, /version, /api-version, /api
 - Docker support (aeternity/aesophia_http)
 
-[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v4.0.0-rc5...HEAD
+[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v4.0.0...HEAD
+[4.0.0]: https://github.com/aeternity/aesophia_http/compare/v4.0.0-rc4...v4.0.0
 [4.0.0-rc5]: https://github.com/aeternity/aesophia_http/compare/v4.0.0-rc4...v4.0.0-rc5
 [4.0.0-rc4]: https://github.com/aeternity/aesophia_http/compare/v4.0.0-rc3...v4.0.0-rc4
 [4.0.0-rc3]: https://github.com/aeternity/aesophia_http/compare/v4.0.0-rc1...v4.0.0-rc3
