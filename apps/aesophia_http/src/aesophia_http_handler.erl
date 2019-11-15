@@ -47,7 +47,6 @@ handle_request_json(Req0, State = #state{ validator = Validator,
             Req = cowboy_req:reply(400, #{}, Body, Req1),
             {stop, Req, State}
     catch error:_Error ->
-            io:format("Exception: ~p\n~p\n", [_Error, erlang:get_stacktrace()]),
             Body = jsx:encode(to_error({validation_error, <<>>, <<>>})),
             {stop, cowboy_req:reply(400, #{}, Body, Req0), State}
     end.
