@@ -242,6 +242,33 @@ paths:
           schema:
             $ref: '#/definitions/CompilerErrors'
 
+  /validate-byte-code:
+    post:
+      operationId: 'ValidateByteCode'
+      description: 'Verify that an encoded byte array is the result of compiling a given contract'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: contract byte array and source code
+          required: true
+          schema:
+            $ref: '#/definitions/ValidateByteCodeInput'
+      responses:
+        '200':
+          description: Validation successful
+        '400':
+          description: Invalid data
+          schema:
+            $ref: '#/definitions/Error'
+        '400':
+          description: Invalid contract
+          schema:
+            $ref: '#/definitions/CompilerErrors'
+
   /version:
     get:
       operationId: 'Version'
@@ -507,6 +534,21 @@ definitions:
       - calldata
       - function
       - source
+  ValidateByteCodeInput:
+    type: object
+    properties:
+      bytecode:
+        description: 'Compiled contract'
+        $ref: '#/definitions/EncodedByteArray'
+      source:
+        description: 'Sophia contract source code'
+        type: string
+      options:
+        $ref: '#/definitions/CompileOpts'
+    required:
+      - bytecode
+      - source
+      - options
   DecodedCallresult:
     type: object
     properties:
