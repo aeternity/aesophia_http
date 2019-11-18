@@ -29,6 +29,7 @@
         , decode_call_result/1
         , decode_call_result_bytecode/1
         , decode_call_result_bytecode_not_ok/1
+        , validate_byte_code/1
         , get_api/1
         , get_api_version/1
         , get_version/1
@@ -43,7 +44,9 @@ all() ->
 
 groups() ->
     [
-     {fate, [], [{group, contracts}]},
+     {fate, [], [{group, contracts},
+                 validate_byte_code
+                ]},
      {aevm, [], [{group, contracts}]},
      {contracts, [],
       [ identity_contract
@@ -373,7 +376,19 @@ decode_call_result_bytecode_not_ok(Config) ->
     ?assertMatch({X, X}, {#{<<"abort">> => [<<"An error happened!">>]}, Res2}),
     ok.
 
-
+validate_byte_code(_Config) ->
+    {ok, IdByteCode}  = compile_test_contract(fate, "identity"),
+    {ok, IdSource}    = read_test_contract("identity"),
+    {ok, NotIdSource} = read_test_contract("callresult"),
+    ?assertMatch({ok, 200, #{}},
+                 get_validate_byte_code(#{bytecode => IdByteCode,
+                                          source   => IdSource,
+                                          options  => #{} })),
+    ?assertMatch({ok, 400, [#{<<"message">> := <<"Byte code does not match source code.\n", _/binary>> }]},
+                 get_validate_byte_code(#{bytecode => IdByteCode,
+                                          source   => NotIdSource,
+                                          options  => #{} })),
+    ok.
 
 test_data() ->
     #{ <<"a">> => "(42, true, \"Hello\", ())"
@@ -541,6 +556,10 @@ get_decode_call_result(Request) ->
 get_decode_call_result_bytecode(Request) ->
     Host = internal_address(),
     http_request(Host, post, "decode-call-result/bytecode", Request).
+
+get_validate_byte_code(Request) ->
+    Host = internal_address(),
+    http_request(Host, post, "validate-byte-code", Request).
 
 get_api_version() ->
     Host = internal_address(),

@@ -193,6 +193,24 @@ handle_request('GenerateACI', Req, _Context) ->
         _ -> {400, [], bad_request()}
     end;
 
+handle_request('ValidateByteCode', Req, _Context) ->
+    case Req of
+        #{'ValidateByteCodeInput' :=
+            #{ <<"bytecode">> := EncodedByteCode,
+               <<"source">>   := Source,
+               <<"options">>  := Options }} ->
+            case aeser_api_encoder:safe_decode(contract_bytearray, EncodedByteCode) of
+                {ok, ByteCode} ->
+                    case validate_byte_code(ByteCode, Source, Options) of
+                        ok -> {200, [], #{}};
+                        {error, Errors} ->
+                            {400, [], mk_errors(Errors)}
+                    end;
+                {error, _} -> {400, [], mk_error_msg(<<"Bad bytecode">>)}
+            end;
+        _ -> {400, [], bad_request()}
+    end;
+
 handle_request('Version', _Req, _Context) ->
     case aeso_compiler:version() of
         {ok, Vsn} ->
@@ -248,6 +266,16 @@ compile_options(Options) ->
               end,
     [{backend, Backend}, {include, {explicit_files, Map1}}]
       ++ [ {src_file, binary_to_list(SrcFile)} || SrcFile /= no_file ].
+
+validate_byte_code(ByteCode, Source, Options) ->
+    Opts = compile_options(Options),
+    try
+        Map = aeser_contract_code:deserialize(ByteCode),
+        aeso_compiler:validate_byte_code(Map, binary_to_list(Source), Opts)
+    catch _:R ->
+            Msg = io_lib:format("Compiler crashed, with reason: ~p\n~p\n", [R, erlang:get_stacktrace()]),
+            {error, erlang:iolist_to_binary(Msg)}
+    end.
 
 encode_calldata(Source, Options, Function, Arguments) ->
     COpts = compile_options(Options),
