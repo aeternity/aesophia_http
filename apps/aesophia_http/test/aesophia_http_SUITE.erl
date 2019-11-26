@@ -424,15 +424,18 @@ bin_test_data(Backend) ->
            end,
     maps:map(Enc, test_data()).
 
+-define(API_VERSION,      <<"4.1.0">>).
+-define(COMPILER_VERSION, <<"4.1.0">>).
+
 get_api_version(_Config) ->
     {ok, 200, #{<<"api-version">> := Vsn}} = get_api_version(),
-    ?assertMatch({X, X}, {Vsn, <<"4.1.0">>}),
+    ?assertMatch({X, X}, {Vsn, ?API_VERSION}),
 
     ok.
 
 get_version(_Config) ->
     {ok, 200, #{<<"version">> := Vsn}} = get_version(),
-    ?assertMatch({X, X}, {{ok, Vsn}, aeso_compiler:version()}),
+    ?assertMatch({X, X}, {Vsn, ?COMPILER_VERSION}),
 
     ok.
 
