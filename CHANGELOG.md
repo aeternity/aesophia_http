@@ -9,44 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
+## [4.1.0] - 2019-11-26
+### Added
+- Added the endpoint `validate-byte-code`
+### Changed
+- Update to [Sophia 4.1.0](https://github.com/aeternity/aesophia/blob/master/CHANGELOG.md#410---2019-11-26)
+### Removed
+
 ## [4.0.0] - 2019-10-11
 ### Added
-### Changed
-- Update to [Sophia 4.0.0](https://github.com/aeternity/aesophia/blob/master/CHANGELOG.md#400---2019-10-11)
-### Removed
-
-## [4.0.0-rc5] - 2019-09-27
-### Added
 - Added the endpoint `decode-call-result/bytecode`
-### Changed
-- Update to [Sophia 4.0.0-rc5](https://github.com/aeternity/aesophia/blob/master/CHANGELOG.md#400-rc5---2019-09-27)
-### Removed
-
-## [4.0.0-rc4] - 2019-09-13
-### Added
-### Changed
-- Update to [Sophia 4.0.0-rc4](https://github.com/aeternity/aesophia/blob/master/CHANGELOG.md#400-rc4---2019-09-13)
-### Removed
-
-## [4.0.0-rc3] - 2019-09-12
-### Added
-### Changed
-- The error reporting has been updated - see [Swagger file](https://github.com/aeternity/aesophia_http/blob/master/config/swagger.yaml)
-  for details.
-- Update to [Sophia 4.0.0-rc3](https://github.com/aeternity/aesophia/blob/master/CHANGELOG.md#400-rc3---2019-09-12)
-### Removed
-
-## [4.0.0-rc1] - 2019-08-23
-### Added
 - The compiler now supports both FATE and AEVM - therefore many of the APIs now have an
   additional configuration field `backend` that can be either `fate` or `aevm` (`fate` is
   the default). See the Swagger file for details.
 - Some of the APIs were missing the option to have a `filesystem` configuration option,
   this has been corrected. Again, see the Swagger file for details.
 ### Changed
-- Update to [Sophia 4.0.0-rc1](https://github.com/aeternity/aesophia/blob/master/CHANGELOG.md#400-rc1---2019-08-22)
-  Note: this version has implicit compilation of standard libraries and might come across
-  as a bit slow. This will be fixed before 4.0.0.
+- Update to [Sophia 4.0.0](https://github.com/aeternity/aesophia/blob/master/CHANGELOG.md#400---2019-10-11)
+- The error reporting has been updated - see [Swagger file](https://github.com/aeternity/aesophia_http/blob/master/config/swagger.yaml)
+  for details.
 ### Removed
 
 ## [3.2.0] - 2019-06-28
