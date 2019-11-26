@@ -299,7 +299,7 @@ decode_calldata_source(Config) ->
         #{ <<"a">> => [#{<<"type">> => #{<<"tuple">> => [<<"int">>,<<"bool">>,<<"string">>, #{<<"tuple">> => []}]},
                          <<"value">> => [42,true,<<"Hello">>,[]]}]
          , <<"b">> => [#{<<"type">> => #{<<"tuple">> => [#{<<"Test.d">> => [<<"int">>]}, #{<<"Test.d">> => [<<"int">>]}]},
-                         <<"value">> => [#{<<"One">> => [12,18]},#{<<"Two">> => []}]}]
+                         <<"value">> => [#{<<"One">> => [12,18]},<<"Two">>]}]
          , <<"c">> => [#{<<"type">> => #{<<"record">> => [#{<<"name">> => <<"x">>,<<"type">> => <<"int">>},
                                                           #{<<"name">> => <<"y">>,<<"type">> => <<"string">>},
                                                           #{<<"name">> => <<"z">>, <<"type">> => #{<<"map">> => [<<"int">>,<<"int">>]}}]},
@@ -326,7 +326,7 @@ decode_call_result(Config) ->
     Results = maps:map(DoDec, Values),
     Expects =
         #{ <<"a">> => [42,true,<<"Hello">>,[]]
-         , <<"b">> => [#{<<"One">> => [12,18]},#{<<"Two">> => []}]
+         , <<"b">> => [#{<<"One">> => [12,18]},<<"Two">>]
          , <<"c">> => #{<<"x">> => 43,<<"y">> => <<"Foo">>,<<"z">> => [[1,2]]}
          , <<"d">> => [<<"#0001">>,<<"#000102030405060708090a0b0c0d">>,
                        <<"#000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f">>,
@@ -424,15 +424,18 @@ bin_test_data(Backend) ->
            end,
     maps:map(Enc, test_data()).
 
+-define(API_VERSION,      <<"4.1.0">>).
+-define(COMPILER_VERSION, <<"4.1.0">>).
+
 get_api_version(_Config) ->
     {ok, 200, #{<<"api-version">> := Vsn}} = get_api_version(),
-    ?assertMatch({X, X}, {Vsn, <<"4.1.0">>}),
+    ?assertMatch({X, X}, {Vsn, ?API_VERSION}),
 
     ok.
 
 get_version(_Config) ->
     {ok, 200, #{<<"version">> := Vsn}} = get_version(),
-    ?assertMatch({X, X}, {{ok, Vsn}, aeso_compiler:version()}),
+    ?assertMatch({X, X}, {Vsn, ?COMPILER_VERSION}),
 
     ok.
 
