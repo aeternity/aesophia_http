@@ -242,6 +242,32 @@ paths:
           schema:
             $ref: '#/definitions/CompilerErrors'
 
+  /fate-assembler:
+    post:
+      operationId: 'GetFateAssemblerCode'
+      description: 'Get FATE assembler code from bytecode'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: contract byte array
+          required: true
+          schema:
+            $ref: '#/definitions/ByteCodeInput'
+      responses:
+        '200':
+          description: The FATE assembler
+          schema:
+            $ref: '#/definitions/FateAssembler'
+        '400':
+          description: Invalid data
+          schema:
+            $ref: '#/definitions/Error'
+
+
   /validate-byte-code:
     post:
       operationId: 'ValidateByteCode'
@@ -268,6 +294,31 @@ paths:
           description: Invalid contract
           schema:
             $ref: '#/definitions/CompilerErrors'
+
+  /compiler-version:
+    post:
+      operationId: 'GetCompilerVersion'
+      description: 'Extract compiler version from bytecode'
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - in: body
+          name: body
+          description: contract byte array
+          required: true
+          schema:
+            $ref: '#/definitions/ByteCodeInput'
+      responses:
+        '200':
+          description: The compiler version
+          schema:
+            $ref: '#/definitions/CompilerVersion'
+        '400':
+          description: Invalid data
+          schema:
+            $ref: '#/definitions/Error'
 
   /version:
     get:
@@ -534,6 +585,14 @@ definitions:
       - calldata
       - function
       - source
+  ByteCodeInput:
+    type: object
+    properties:
+      bytecode:
+        description: 'Compiled contract'
+        $ref: '#/definitions/EncodedByteArray'
+    required:
+      - bytecode
   ValidateByteCodeInput:
     type: object
     properties:
@@ -581,4 +640,12 @@ definitions:
   EncodedByteArray:
     description: 'Prefixed (cb_) Base64Check encoded byte array'
     type: string
+  FateAssembler:
+    type: object
+    properties:
+      fate-assembler:
+        description: 'Fate assembler code'
+        type: string
+    required:
+      - fate-assembler
 
