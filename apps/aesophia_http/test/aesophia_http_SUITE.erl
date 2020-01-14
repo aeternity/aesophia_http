@@ -34,6 +34,7 @@
         , get_api_version/1
         , get_version/1
         , compiler_version/1
+        , fate_assembler/1
         ]).
 
 all() ->
@@ -46,7 +47,8 @@ all() ->
 groups() ->
     [
      {fate, [], [{group, contracts},
-                 validate_byte_code
+                  validate_byte_code,
+                  fate_assembler
                 ]},
      {aevm, [], [{group, contracts}]},
      {contracts, [],
@@ -426,6 +428,10 @@ bin_test_data(Backend) ->
            end,
     maps:map(Enc, test_data()).
 
+fate_assembler(_) ->
+    C = <<"cb_+GZGA6CpNW171TSUfk88PoVv7YslUgxRcOJYKFPRxoGkXArWosC4OZ7+RNZEHwA3ADcAGg6CPwEDP/64F37sADcBBwcBAQCWLwIRRNZEHxFpbml0EbgXfuwRbWFpboIvAIU0LjEuMAANEx2r">>,
+    _Res = do_get_fate_assembler(C).
+
 -define(API_VERSION,      <<"4.1.0">>).
 -define(COMPILER_VERSION, <<"4.1.0">>).
 
@@ -534,6 +540,10 @@ do_get_compiler_version(CB) ->
     {ok, 200, #{<<"version">> := CVer}} = get_compiler_version(#{bytecode => CB}),
     CVer.
 
+do_get_fate_assembler(CB) ->
+    {ok, 200, #{<<"fate-assembler">> := Asm}} = get_fate_assembler(#{bytecode => CB}),
+    Asm.
+
 %% ============================================================
 %% HTTP Requests
 %% Note that some are internal and some are external!
@@ -576,6 +586,10 @@ get_decode_call_result_bytecode(Request) ->
 get_validate_byte_code(Request) ->
     Host = internal_address(),
     http_request(Host, post, "validate-byte-code", Request).
+
+get_fate_assembler(Request) ->
+    Host = internal_address(),
+    http_request(Host, post, "fate-assembler", Request).
 
 get_compiler_version(Request) ->
     Host = internal_address(),
