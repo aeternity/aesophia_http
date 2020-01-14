@@ -26,6 +26,10 @@ Interface paths (see the `config/swagger.yaml` for details):
 
 /validate-byte-code - Check that some bytecode was produced from the given source code.
 
+/fate-assembler - Get the FATE assembler (as a string) from FATE bytecode.
+
+/compiler-version - Extract the compiler version from bytecode.
+
 /version - return the version of the Sophia compiler
 
 /api-version - return the version of the API
@@ -127,6 +131,17 @@ Validating against source code with a different implementation of `id` returns:
 [{"message":"Byte code does not match source code.\n- The implementation of the function id is different.\n","pos":{"col":0,"line":0},"type":"data_error"}]
 ```
 
+### Getting fate assembler (FATE only :-) )
+
+You can get the FATE assembler code for some particular bytecode:
+```
+curl -H "Content-Type: application/json" -d '{"bytecode":"cb_+GNGA6CBDP58NrY5L7PzZrlGZ0C8aqcXIYwqv2WMpyTg8IuBTsC3nv5E1kQfADcANwAaDoI/AQM//tjzDDgANwEHBwEBAJQvAhFE1kQfEWluaXQR2PMMOAlpZIIvAIU0LjAuMABqFanJ"}' -X POST http://localhost:3080/fate-assembler
+```
+Returns:
+```
+{"fate-assembler":"FUNCTION init( ) : {tuple,[]}\n  ;; BB : 0\n          STORE store1 ()\n          RETURNR ()\nFUNCTION id( integer) : integer\n  ;; BB : 0\n          RETURNR arg0\n\n"}
+```
+
 ### Encoding calldata
 
 To encode the call data necessary to call the function `set` with the
@@ -189,6 +204,18 @@ curl -H "Content-Type: application/json" -d "{\"bytecode\":\"cb_+JFGA6DcSHcAbyhL
 Returns:
 ```
 {"function":"get","result":{"type":"int","value":42}}
+```
+
+### Getting the compiler version used
+You can extract the compiler version that was used to compile some particular bytecode:
+
+```
+curl -H "Content-Type: application/json" -d '{"bytecode":"cb_+GNGA6CBDP58NrY5L7PzZrlGZ0C8aqcXIYwqv2WMpyTg8IuBTsC3nv5E1kQfADcANwAaDoI/AQM//tjzDDgANwEHBwEBAJQvAhFE1kQfEWluaXQR2PMMOAlpZIIvAIU0LjAuMABqFanJ"}' -X POST http://localhost:3080/compiler-version
+```
+
+Returns:
+```
+{"version":"4.0.0"}
 ```
 
 ### Decoding return value - deprecated
