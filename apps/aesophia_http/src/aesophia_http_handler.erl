@@ -211,6 +211,24 @@ handle_request('ValidateByteCode', Req, _Context) ->
         _ -> {400, [], bad_request()}
     end;
 
+handle_request('GetCompilerVersion', Req, _Context) ->
+    case Req of
+        #{'ByteCodeInput' := #{<<"bytecode">> := EncodedByteCode}} ->
+            case aeser_api_encoder:safe_decode(contract_bytearray, EncodedByteCode) of
+                {ok, ByteCode} ->
+                    try
+                        Map = aeser_contract_code:deserialize(ByteCode),
+                        CVer = maps:get(compiler_version, Map, undefined),
+                        {200, [], #{version => iolist_to_binary(io_lib:format("~s", [CVer]))}}
+                    catch _:_ ->
+                        {400, [], mk_error_msg(<<"Bad bytecode">>)}
+                    end;
+                {error, _} ->
+                    {400, [], mk_error_msg(<<"Bad bytecode">>)}
+            end;
+        _ -> {400, [], bad_request()}
+    end;
+
 handle_request('Version', _Req, _Context) ->
     case aeso_compiler:version() of
         {ok, Vsn} ->
