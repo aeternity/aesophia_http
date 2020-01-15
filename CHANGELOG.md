@@ -6,9 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+### Changed
+### Removed
+
+## [4.2.0] - 2020-01-15
+### Added
 - Added the endpoint `fate-assembler`
 - Added the endpoint `compiler-version`
 ### Changed
+- Update to [Sophia 4.2.0](https://github.com/aeternity/aesophia/blob/master/CHANGELOG.md#420---2020-01-15)
 ### Removed
 
 ## [4.1.0] - 2019-11-26
@@ -70,12 +76,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial HTTP interface: /aci, /compile, /decode-data, /encode-calldata, /version, /api-version, /api
 - Docker support (aeternity/aesophia_http)
 
-[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v4.0.0...HEAD
-[4.0.0]: https://github.com/aeternity/aesophia_http/compare/v4.0.0-rc5...v4.0.0
-[4.0.0-rc5]: https://github.com/aeternity/aesophia_http/compare/v4.0.0-rc4...v4.0.0-rc5
-[4.0.0-rc4]: https://github.com/aeternity/aesophia_http/compare/v4.0.0-rc3...v4.0.0-rc4
-[4.0.0-rc3]: https://github.com/aeternity/aesophia_http/compare/v4.0.0-rc1...v4.0.0-rc3
-[4.0.0-rc1]: https://github.com/aeternity/aesophia_http/compare/v3.2.0...v4.0.0-rc1
+[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v4.2.0...HEAD
+[4.2.0]: https://github.com/aeternity/aesophia_http/compare/v4.1.0...v4.2.0
+[4.1.0]: https://github.com/aeternity/aesophia_http/compare/v4.0.0...v4.1.0
+[4.0.0]: https://github.com/aeternity/aesophia_http/compare/v3.2.0...v4.0.0
 [3.2.0]: https://github.com/aeternity/aesophia_http/compare/v3.1.0...v3.2.0
 [3.1.0]: https://github.com/aeternity/aesophia_http/compare/v3.0.0...v3.1.0
 [3.0.0]: https://github.com/aeternity/aesophia_http/compare/v2.1.0...v3.0.0
