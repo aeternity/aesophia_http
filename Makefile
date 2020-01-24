@@ -28,7 +28,7 @@ $(HTTP_APP)/priv/swagger.json: config/swagger.yaml
 	@rm -fr $(SWTEMP)
 
 $(SWAGGER_CODEGEN_CLI):
-	curl -fsS --create-dirs -o $@ http://central.maven.org/maven2/io/swagger/swagger-codegen-cli/$(SWAGGER_CODEGEN_CLI_V)/swagger-codegen-cli-$(SWAGGER_CODEGEN_CLI_V).jar
+	curl -fsS --create-dirs -o $@ https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/$(SWAGGER_CODEGEN_CLI_V)/swagger-codegen-cli-$(SWAGGER_CODEGEN_CLI_V).jar
 
 $(SWAGGER_ENDPOINTS_SPEC): config/swagger.yaml
 	$(REBAR) swagger_endpoints

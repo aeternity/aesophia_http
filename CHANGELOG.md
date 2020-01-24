@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 ### Changed
+- Always return `Vary` HTTP header together with CORS headers to prevent caching issues
 ### Removed
 
 ## [4.2.0] - 2020-01-15
