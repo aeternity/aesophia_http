@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 ### Changed
+### Removed
+
+## [4.2.1] - 2020-03-12
+### Added
+### Changed
 - Always return `Vary` HTTP header together with CORS headers to prevent caching issues
 ### Removed
 
@@ -77,7 +82,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial HTTP interface: /aci, /compile, /decode-data, /encode-calldata, /version, /api-version, /api
 - Docker support (aeternity/aesophia_http)
 
-[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v4.2.0...HEAD
+[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v4.2.1...HEAD
+[4.2.1]: https://github.com/aeternity/aesophia_http/compare/v4.2.0...v4.2.1
 [4.2.0]: https://github.com/aeternity/aesophia_http/compare/v4.1.0...v4.2.0
 [4.1.0]: https://github.com/aeternity/aesophia_http/compare/v4.0.0...v4.1.0
 [4.0.0]: https://github.com/aeternity/aesophia_http/compare/v3.2.0...v4.0.0
