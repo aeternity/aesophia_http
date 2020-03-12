@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
-## [4.2.0] - 2020-03-12
+## [4.2.1] - 2020-03-12
 ### Added
 ### Changed
 - Always return `Vary` HTTP header together with CORS headers to prevent caching issues
