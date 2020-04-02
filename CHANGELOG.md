@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
+## [4.3.0] - 2020-04-02
+### Added
+### Changed
+- Update to [Sophia 4.3.0](https://github.com/aeternity/aesophia/blob/master/CHANGELOG.md#430)
+### Removed
+
 ## [4.2.1] - 2020-03-12
 ### Added
 ### Changed
@@ -82,7 +88,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial HTTP interface: /aci, /compile, /decode-data, /encode-calldata, /version, /api-version, /api
 - Docker support (aeternity/aesophia_http)
 
-[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v4.2.1...HEAD
+[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v4.3.0...HEAD
+[4.3.0]: https://github.com/aeternity/aesophia_http/compare/v4.2.1...v4.3.0
 [4.2.1]: https://github.com/aeternity/aesophia_http/compare/v4.2.0...v4.2.1
 [4.2.0]: https://github.com/aeternity/aesophia_http/compare/v4.1.0...v4.2.0
 [4.1.0]: https://github.com/aeternity/aesophia_http/compare/v4.0.0...v4.1.0
