@@ -181,7 +181,7 @@ handle_request('GenerateACI', Req, _Context) ->
             case generate_aci(Code, Options) of
                  {ok, JsonACI = [_ | _], StringACI} ->
                      {200, [],
-                      #{encoded_aci => lists:last(JsonACI),
+                      #{encoded_aci => JsonACI,
                         interface   => StringACI}};
                  {ok, [], _} ->
                      {400, [], mk_error_msg(<<"ACI generator returned an empty result">>)};

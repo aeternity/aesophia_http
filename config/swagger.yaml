@@ -451,7 +451,7 @@ definitions:
     type: object
     properties:
       encoded_aci:
-        type: object
+        type: array
       interface:
         type: string
     required:
