@@ -452,6 +452,8 @@ definitions:
     properties:
       encoded_aci:
         type: object
+      external_encoded_aci:
+        type: array
       interface:
         type: string
     required:

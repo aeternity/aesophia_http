@@ -182,6 +182,7 @@ handle_request('GenerateACI', Req, _Context) ->
                  {ok, JsonACI = [_ | _], StringACI} ->
                      {200, [],
                       #{encoded_aci => lists:last(JsonACI),
+                        external_encoded_aci => lists:droplast(JsonACI),
                         interface   => StringACI}};
                  {ok, [], _} ->
                      {400, [], mk_error_msg(<<"ACI generator returned an empty result">>)};
