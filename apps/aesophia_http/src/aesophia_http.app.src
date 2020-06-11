@@ -1,6 +1,6 @@
 {application, aesophia_http,
  [{description, "HTTP interface for Sophia compiler"},
-  {vsn, "4.3.0"},
+  {vsn, "4.3.2"},
   {registered, []},
   {mod, { aesophia_http_app, []}},
   {applications,
@@ -19,6 +19,6 @@
   {modules, []},
 
   {maintainers, []},
-  {licenses, ["Apache 2.0"]},
+  {licenses, ["ISC"]},
   {links, []}
  ]}.

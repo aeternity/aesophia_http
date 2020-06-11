@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
+## [4.3.2] - 2020-06-11
+### Note
+- Skipped 4.3.1 release as this was used as fix only in `aesophia_cli`  
+### Added
+- Add `external_encoded_aci` parameter to ACI endpoint returning ACI of any contract but the main
+### Changed
+### Removed
+
 ## [4.3.0] - 2020-04-02
 ### Added
 ### Changed
@@ -88,7 +96,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial HTTP interface: /aci, /compile, /decode-data, /encode-calldata, /version, /api-version, /api
 - Docker support (aeternity/aesophia_http)
 
-[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v4.3.0...HEAD
+[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v4.3.2...HEAD
+[4.3.2]: https://github.com/aeternity/aesophia_http/compare/v4.3.0...v4.3.2
 [4.3.0]: https://github.com/aeternity/aesophia_http/compare/v4.2.1...v4.3.0
 [4.2.1]: https://github.com/aeternity/aesophia_http/compare/v4.2.0...v4.2.1
 [4.2.0]: https://github.com/aeternity/aesophia_http/compare/v4.1.0...v4.2.0

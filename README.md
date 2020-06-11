@@ -243,7 +243,7 @@ curl http://localhost:3080/version
 ```
 curl http://localhost:3080/api-version
 
-{"api-version":"4.3.0"}
+{"api-version":"4.3.2"}
 ```
 
 ```
