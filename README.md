@@ -237,13 +237,13 @@ version and the whole actual API (paste into any [swagger file generator](https:
 ```
 curl http://localhost:3080/version
 
-{"version":"4.3.0"}
+{"version":"5.0.0"}
 ```
 
 ```
 curl http://localhost:3080/api-version
 
-{"api-version":"4.3.2"}
+{"api-version":"5.0.0"}
 ```
 
 ```
