@@ -1,4 +1,4 @@
-contract Remote =
+contract interface Remote =
   entrypoint f : () => unit
 contract Test =
   record r = { x : int, y : string, z : map(int, int) }

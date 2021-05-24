@@ -114,8 +114,8 @@ identity_contract(Config) ->
 identity_aci(_Config) ->
     #{<<"encoded_aci">> := ACI, <<"external_encoded_aci">> := ExternalACI, <<"interface">> := Prototype} =
         create_aci("identity"),
-    ?assertMatch(<<"contract Identity =\n"
-                   "  entrypoint main : (int) => int\n">>, Prototype),
+    ?assertMatch(<<"main contract Identity =\n"
+                   "  entrypoint main_ : (int) => int\n">>, Prototype),
 
     ?assertMatch(#{<<"contract">> := _C}, ACI),
     ?assertMatch([], ExternalACI),
@@ -433,8 +433,8 @@ fate_assembler(_) ->
     C = <<"cb_+GZGA6CpNW171TSUfk88PoVv7YslUgxRcOJYKFPRxoGkXArWosC4OZ7+RNZEHwA3ADcAGg6CPwEDP/64F37sADcBBwcBAQCWLwIRRNZEHxFpbml0EbgXfuwRbWFpboIvAIU0LjEuMAANEx2r">>,
     _Res = do_get_fate_assembler(C).
 
--define(API_VERSION,      <<"5.0.0">>).
--define(COMPILER_VERSION, <<"5.0.0">>).
+-define(API_VERSION,      <<"5.1.0">>).
+-define(COMPILER_VERSION, <<"5.1.0">>).
 
 compiler_version(_) ->
     F = fun({ExpVer, CB}) ->
