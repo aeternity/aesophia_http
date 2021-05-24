@@ -114,8 +114,8 @@ identity_contract(Config) ->
 identity_aci(_Config) ->
     #{<<"encoded_aci">> := ACI, <<"external_encoded_aci">> := ExternalACI, <<"interface">> := Prototype} =
         create_aci("identity"),
-    ?assertMatch(<<"contract Identity =\n"
-                   "  entrypoint main : (int) => int\n">>, Prototype),
+    ?assertMatch(<<"main contract Identity =\n"
+                   "  entrypoint main_ : (int) => int\n">>, Prototype),
 
     ?assertMatch(#{<<"contract">> := _C}, ACI),
     ?assertMatch([], ExternalACI),
