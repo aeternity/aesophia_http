@@ -9,10 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
-## [5.1.0]
+## [6.0.0]
 ### Added
 ### Changed
-- Update to [Sophia 5.1.0](https://github.com/aeternity/aesophia/blob/master/CHANGELOG.md#510)
+- Update to [Sophia 6.0.0](https://github.com/aeternity/aesophia/blob/master/CHANGELOG.md#600)
 ### Removed
 
 ## [5.0.0]
@@ -108,8 +108,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial HTTP interface: /aci, /compile, /decode-data, /encode-calldata, /version, /api-version, /api
 - Docker support (aeternity/aesophia_http)
 
-[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v5.1.0...HEAD
-[5.1.0]: https://github.com/aeternity/aesophia_http/compare/v5.0.0...v5.1.0
+[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v6.0.0...HEAD
+[6.0.0]: https://github.com/aeternity/aesophia_http/compare/v5.0.0...v6.0.0
 [5.0.0]: https://github.com/aeternity/aesophia_http/compare/v4.3.2...v5.0.0
 [4.3.2]: https://github.com/aeternity/aesophia_http/compare/v4.3.0...v4.3.2
 [4.3.0]: https://github.com/aeternity/aesophia_http/compare/v4.2.1...v4.3.0
