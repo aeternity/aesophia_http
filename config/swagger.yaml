@@ -1,7 +1,7 @@
 swagger: '2.0'
 info:
   description: 'This is the [Aeternity](https://www.aeternity.com/) compiler API.'
-  version: 6.0.0
+  version: 6.0.2
   title: Aeternity compiler
   termsOfService: 'https://www.aeternity.com/terms/'
   contact:
@@ -454,6 +454,8 @@ definitions:
         type: object
       external_encoded_aci:
         type: array
+        items:
+          type: object
       interface:
         type: string
     required:
