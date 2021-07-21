@@ -7,8 +7,6 @@ info:
   contact:
     email: apiteam@aeternity.com
 basePath: /
-schemes:
-  - http
 paths:
   /aci:
     post:
