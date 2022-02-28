@@ -2,7 +2,7 @@ name: Staging Aesophia Http Pipeline
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
     types: [ opened, synchronize, closed ]
 
 env:
@@ -50,7 +50,7 @@ jobs:
         with:
           images: aeternity/aesophia_http
           tags: |
-            type=raw,value=latest,enable=${{ endsWith(GitHub.ref, 'main') }}
+            type=raw,value=latest,enable=${{ endsWith(GitHub.ref, 'master') }}
             type=ref,event=tag
             type=ref,event=pr
 
