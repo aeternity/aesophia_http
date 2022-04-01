@@ -54,8 +54,8 @@ handle_request_json(Req0, State = #state{ validator = Validator,
 handle_request('CompileContract', Req, _Context) ->
     case Req of
         #{'Contract' :=
-              #{ <<"code">> := Code
-               , <<"options">> := Options }} ->
+              #{ <<"code">> := Code } = Json } ->
+            Options = maps:get(<<"options">>, Json, #{}),
             case compile_contract(Code, Options) of
                  {ok, ByteCode} ->
                      {200, [], #{bytecode => aeser_api_encoder:encode(contract_bytearray, ByteCode)}};
@@ -71,9 +71,9 @@ handle_request('EncodeCalldata', Req, _Context) ->
     case Req of
         #{'FunctionCallInput' :=
               #{ <<"source">>    := ContractCode
-               , <<"options">>   := Options
                , <<"function">>  := FunctionName
-               , <<"arguments">> := Arguments } } ->
+               , <<"arguments">> := Arguments } = Json } ->
+            Options = maps:get(<<"options">>, Json, #{}),
             case encode_calldata(ContractCode, Options, FunctionName, Arguments) of
                 {ok, Result} ->
                     {200, [], #{calldata => Result}};
@@ -121,10 +121,10 @@ handle_request('DecodeCalldataSource', Req, _Context) ->
         #{ 'DecodeCalldataSource' :=
             #{ <<"calldata">> := EncodedCalldata,
                <<"function">> := FunName,
-               <<"source">>   := Source,
-               <<"options">>  := Options } } ->
+               <<"source">>   := Source } = Json } ->
             case aeser_api_encoder:safe_decode(contract_bytearray, EncodedCalldata) of
                 {ok, Calldata} ->
+                    Options = maps:get(<<"options">>, Json, #{}),
                     decode_calldata_source(Calldata, FunName, Source, Options);
                 {error, _} ->
                     {400, [], mk_error_msg(<<"Bad calldata">>)}
@@ -136,12 +136,12 @@ handle_request('DecodeCallResult', Req, _Context) ->
     case Req of
         #{ 'SophiaCallResultInput' :=
            #{ <<"source">>      := Source,
-              <<"options">>     := Options,
               <<"function">>    := FunName,
               <<"call-result">> := CallRes,
-              <<"call-value">>  := EncodedCallValue } } ->
+              <<"call-value">>  := EncodedCallValue } = Json } ->
             case aeser_api_encoder:safe_decode(contract_bytearray, EncodedCallValue) of
                 {ok, CallValue} ->
+                    Options = maps:get(<<"options">>, Json, #{}),
                     decode_call_result(Source, Options, FunName, CallRes, CallValue);
                 {error, _} ->
                     {400, [], mk_error_msg(<<"Bad call-value">>)}
@@ -176,8 +176,8 @@ handle_request('DecodeCallResultBytecode', Req, _Context) ->
 handle_request('GenerateACI', Req, _Context) ->
     case Req of
         #{'Contract' :=
-              #{ <<"code">> := Code
-               , <<"options">> := Options }} ->
+              #{ <<"code">> := Code } = Json } ->
+            Options = maps:get(<<"options">>, Json, #{}),
             case generate_aci(Code, Options) of
                  {ok, JsonACI = [_ | _], StringACI} ->
                      {200, [],
@@ -198,10 +198,10 @@ handle_request('ValidateByteCode', Req, _Context) ->
     case Req of
         #{'ValidateByteCodeInput' :=
             #{ <<"bytecode">> := EncodedByteCode,
-               <<"source">>   := Source,
-               <<"options">>  := Options }} ->
+               <<"source">>   := Source } = Json } ->
             case aeser_api_encoder:safe_decode(contract_bytearray, EncodedByteCode) of
                 {ok, ByteCode} ->
+                    Options = maps:get(<<"options">>, Json, #{}),
                     case validate_byte_code(ByteCode, Source, Options) of
                         ok -> {200, [], #{}};
                         {error, Errors} ->
