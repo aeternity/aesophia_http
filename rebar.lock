@@ -35,7 +35,7 @@
   0},
  {<<"jsx">>,
   {git,"https://github.com/talentdeficit/jsx.git",
-       {ref,"bb9b3e570a7efe331eed0900c3a5188043a850d7"}},
+       {ref,"e8d2e01b608e0670a4f82e35ccb5ef3f86115423"}},
   0},
  {<<"ranch">>,
   {git,"https://github.com/ninenines/ranch",
