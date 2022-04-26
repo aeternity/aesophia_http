@@ -257,7 +257,7 @@ handle_request('Version', _Req, _Context) ->
             {500, [], #{reason => <<"Internal error: Could not find the version!?">>}}
     end;
 
-handle_request('APIVersion', _Req, #{ spec := Spec }) ->
+handle_request('ApiVersion', _Req, #{ spec := Spec }) ->
     case jsx:decode(Spec, [return_maps]) of
         #{ <<"info">> := #{ <<"version">> := Vsn } } ->
             {200, [], #{'api-version' => Vsn}};
