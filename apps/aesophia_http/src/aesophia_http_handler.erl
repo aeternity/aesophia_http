@@ -102,12 +102,11 @@ handle_request('DecodeCalldataBytecode', Req, _Context) ->
     case Req of
         #{ 'DecodeCalldataBytecode' :=
             #{ <<"calldata">> := EncodedCalldata,
-               <<"bytecode">> := EncodedBytecode } = Json } ->
-            Backend = maps:get(<<"backend">>, Json, <<"default">>),
+               <<"bytecode">> := EncodedBytecode } = _Json } ->
             case {aeser_api_encoder:safe_decode(contract_bytearray, EncodedCalldata),
                   aeser_api_encoder:safe_decode(contract_bytearray, EncodedBytecode)} of
                 {{ok, Calldata}, {ok, Bytecode}} ->
-                    decode_calldata_bytecode(Calldata, Bytecode, Backend);
+                    decode_calldata_bytecode(Calldata, Bytecode);
                 {{error, _}, _} ->
                     {400, [], mk_error_msg(<<"Bad calldata">>)};
                 {_, {error, _}} ->
@@ -156,14 +155,12 @@ handle_request('DecodeCallResultBytecode', Req, _Context) ->
             #{ <<"function">>    := FunName,
                <<"call-result">> := CallRes0,
                <<"call-value">>  := EncodedCallValue,
-               <<"bytecode">>    := EncodedBytecode } = Json } ->
-            Backend0 = maps:get(<<"backend">>, Json, <<"fate">>),
-            Backend  = binary_to_atom(Backend0, utf8),
+               <<"bytecode">>    := EncodedBytecode } = _Json } ->
             CallRes  = binary_to_atom(CallRes0, utf8),
             case {aeser_api_encoder:safe_decode(contract_bytearray, EncodedCallValue),
                   aeser_api_encoder:safe_decode(contract_bytearray, EncodedBytecode)} of
                 {{ok, CallValue}, {ok, Bytecode}} ->
-                    decode_callresult_bytecode(CallRes, CallValue, FunName, Bytecode, Backend);
+                    decode_callresult_bytecode(CallRes, CallValue, FunName, Bytecode);
                 {{error, _}, _} ->
                     {400, [], mk_error_msg(<<"Bad callvalue">>)};
                 {_, {error, _}} ->
@@ -276,8 +273,8 @@ generate_aci(Contract, Options) ->
             {ok, JsonACI, StubACI};
         {error,_} = Err ->
             Err
-    catch _:R ->
-            Msg = io_lib:format("Compiler crashed, with reason: ~p\n~p\n", [R, erlang:get_stacktrace()]),
+    catch _:R:S ->
+            Msg = io_lib:format("Compiler crashed, with reason: ~p\n~p\n", [R, S]),
             {error, erlang:iolist_to_binary(Msg)}
     end.
 
@@ -288,8 +285,8 @@ compile_contract(Contract, Options) ->
             {ok, aeser_contract_code:serialize(Map)};
         Err = {error, _} ->
             Err
-    catch _:R ->
-            Msg = io_lib:format("Compiler crashed, with reason: ~p\n~p\n", [R, erlang:get_stacktrace()]),
+    catch _:R:S ->
+            Msg = io_lib:format("Compiler crashed, with reason: ~p\n~p\n", [R, S]),
             {error, erlang:iolist_to_binary(Msg)}
     end.
 
@@ -297,12 +294,7 @@ compile_options(Options) ->
     Map = maps:get(<<"file_system">>, Options, #{}),
     Map1 = maps:from_list([{binary_to_list(N), F} || {N, F} <- maps:to_list(Map)]),
     SrcFile = maps:get(<<"src_file">>, Options, no_file),
-    Backend = case binary_to_atom(maps:get(<<"backend">>, Options, <<"default">>), utf8) of
-                  aevm    -> aevm;
-                  fate    -> fate;
-                  default -> fate
-              end,
-    [{backend, Backend}, {include, {explicit_files, Map1}}]
+    [{include, {explicit_files, Map1}}]
       ++ [ {src_file, binary_to_list(SrcFile)} || SrcFile /= no_file ].
 
 validate_byte_code(ByteCode, Source, Options) ->
@@ -310,8 +302,8 @@ validate_byte_code(ByteCode, Source, Options) ->
     try
         Map = aeser_contract_code:deserialize(ByteCode),
         aeso_compiler:validate_byte_code(Map, binary_to_list(Source), Opts)
-    catch _:R ->
-            Msg = io_lib:format("Compiler crashed, with reason: ~p\n~p\n", [R, erlang:get_stacktrace()]),
+    catch _:R:S ->
+            Msg = io_lib:format("Compiler crashed, with reason: ~p\n~p\n", [R, S]),
             {error, erlang:iolist_to_binary(Msg)}
     end.
 
@@ -336,8 +328,8 @@ decode_data(Type, Data) ->
                 {ok, _Result} = OK -> OK;
                 {error, _ErrorMsg} = Err -> Err
             catch
-                _T:_E ->
-                    String = io_lib:format("~p:~p ~p", [_T,_E,erlang:get_stacktrace()]),
+                _T:_E:_S ->
+                    String = io_lib:format("~p:~p ~p", [_T,_E,_S]),
                     Error = << <<B>> || B <- "Bad argument: " ++ lists:flatten(String) >>,
                     {error, Error}
             end
@@ -366,46 +358,20 @@ parse_type(BinaryString) ->
             {error, unicode:characters_to_binary(atom_to_list(ErrorAtom))}
     end.
 
-decode_callresult_bytecode(ErrOrRevert, CallValue, FunName, _Bytecode, Backend)
+decode_callresult_bytecode(ErrOrRevert, CallValue, FunName, _Bytecode)
         when ErrOrRevert == error; ErrOrRevert == revert ->
-    case aeso_compiler:to_sophia_value("", "", ErrOrRevert, CallValue, [{backend, Backend}]) of
+    case aeso_compiler:to_sophia_value("", "", ErrOrRevert, CallValue, []) of
         {ok, Ast} ->
             {200, [], #{function => FunName, result => aeso_aci:json_encode_expr(Ast)}};
         {error, Es} ->
             {400, [], mk_errors(Es)}
     end;
-decode_callresult_bytecode(ok, CallValue, FunName, SerialBytecode, Backend) ->
+decode_callresult_bytecode(ok, CallValue, FunName, SerialBytecode) ->
     case deserialize(SerialBytecode) of
-        {ok, #{byte_code := Bytecode}} when Backend == fate ->
+        {ok, #{byte_code := Bytecode}} ->
             decode_callresult_bytecode_fate(CallValue, FunName, Bytecode);
-        {ok, #{type_info := TypeInfo}} when Backend == aevm ->
-            decode_callresult_bytecode_aevm(CallValue, FunName, TypeInfo);
-        {ok, _} ->
-            {400, [], mk_error_msg(<<"Bad backend - 'fate' or 'aevm' allowed only">>)};
         {error, _} ->
             {400, [], mk_error_msg(<<"Could not deserialize Bytecode">>)}
-    end.
-
-decode_callresult_bytecode_aevm(CallValue, FunName, TypeInfo) ->
-    case aeb_aevm_abi:type_hash_from_function_name(FunName, TypeInfo) of
-        {ok, Hash} ->
-            case aeb_aevm_abi:typereps_from_type_hash(Hash, TypeInfo) of
-                {ok, _, ResType} ->
-                    case aeb_heap:from_binary(ResType, CallValue) of
-                        {ok, VMRes} ->
-                            try JsonRes = prepare_for_json(ResType, VMRes),
-                                {200, [], #{function => FunName, result => JsonRes}}
-                            catch _:_ ->
-                                {400, [], mk_error_msg(<<"Error preparing JSON">>)}
-                            end;
-                        {error, _} ->
-                            {400, [], mk_error_msg(<<"Could not interpret CallValue as heap">>)}
-                    end;
-                {error, _} ->
-                    {400, [], mk_error_msg(<<"Could not encode typerep for result type">>)}
-            end;
-        {error, _} ->
-            {400, [], mk_error_msg(<<"Bad function name, not found in bytecode">>)}
     end.
 
 decode_callresult_bytecode_fate(CallValue, FunName, _SerBytecode) ->
@@ -416,42 +382,14 @@ decode_callresult_bytecode_fate(CallValue, FunName, _SerBytecode) ->
         {400, [], mk_error_msg(<<"Could not deserialize CallValue">>)}
     end.
 
-decode_calldata_bytecode(Calldata, SerialBytecode, BackendBin) ->
-    Backend = binary_to_atom(BackendBin, utf8),
+decode_calldata_bytecode(Calldata, SerialBytecode) ->
     case deserialize(SerialBytecode) of
-        %% Try a bit to be clever, if backend is not set - do some
-        %% rudimentary auto detection.
-        {ok, #{type_info := [], byte_code := Bytecode}} when Backend == default ->
-            decode_calldata_bytecode_(fate, Calldata, Bytecode);
-        {ok, #{type_info := TypeInfo}} when Backend == default; Backend == aevm ->
-            decode_calldata_bytecode_(aevm, Calldata, TypeInfo);
-        {ok, #{byte_code := Bytecode}} when Backend == fate ->
-            decode_calldata_bytecode_(fate, Calldata, Bytecode);
+        {ok, #{byte_code := Bytecode}} ->
+            decode_calldata_bytecode_(Calldata, Bytecode);
         {error, _} ->
             {400, [], mk_error_msg(<<"Could not deserialize Bytecode">>)}
     end.
-
-decode_calldata_bytecode_(aevm, Calldata, TypeInfo) ->
-    case aeb_aevm_abi:get_function_hash_from_calldata(Calldata) of
-        {ok, Hash} ->
-            case {aeb_aevm_abi:function_name_from_type_hash(Hash, TypeInfo),
-                  aeb_aevm_abi:typereps_from_type_hash(Hash, TypeInfo)} of
-                {{ok, FunName}, {ok, ArgType, _OutType}} ->
-                    case aeb_heap:from_binary({tuple, [word, ArgType]}, Calldata) of
-                        {ok, {_Hash, VMArgs}} ->
-                            prepare_calldata_response(FunName, ArgType, VMArgs);
-                        {error, _} ->
-                            {400, [], mk_error_msg(<<"Could not interpret Calldata as heap">>)}
-                    end;
-                {{error, _}, _} ->
-                    {400, [], mk_error_msg(<<"Could not find function hash in Typeinfo">>)};
-                {_, {error, _}} ->
-                    {400, [], mk_error_msg(<<"Could not encode typerep for Arguments">>)}
-            end;
-        {error, _} ->
-            {400, [], mk_error_msg(<<"Could not find function hash in Calldata">>)}
-    end;
-decode_calldata_bytecode_(fate, Calldata, SerBytecode) ->
+decode_calldata_bytecode_(Calldata, SerBytecode) ->
     try aeb_fate_code:deserialize(SerBytecode) of
         Bytecode ->
             case aeb_fate_encoding:deserialize(Calldata) of

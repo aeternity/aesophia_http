@@ -8,7 +8,7 @@ executors:
     working_directory: ~/src
   docker_builder:
     docker:
-      - image: circleci/buildpack-deps:bionic
+      - image: circleci/buildpack-deps:bionic-otp24
 
 jobs:
   verify_rebar_lock:
