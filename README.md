@@ -12,8 +12,6 @@ Interface paths (see the `config/swagger.yaml` for details):
 
 /compile - compile contract and return code in a JSON structure encoded to contract_bytearray.
 
-/decode-data - Tags 'sophia-type' and 'data'.
-
 /decode-call-result - Tags 'source', 'function', 'call-result', 'call-value'.
 
 /decode-call-result/bytecode - Tags 'bytecode', 'function', 'call-result', 'call-value'.
@@ -216,18 +214,6 @@ curl -H "Content-Type: application/json" -d '{"bytecode":"cb_+GNGA6CBDP58NrY5L7P
 Returns:
 ```
 {"version":"4.0.0"}
-```
-
-### Decoding return value - deprecated
-You can also decode the return value of a contract call:
-
-```
-curl -H "Content-Type: application/json" -d "{\"data\":\"cb_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACr8s/aY\",\"sophia-type\":\"int\"}" -X POST http://localhost:3080/decode-data
-```
-
-Returns:
-```
-{"data":{"type":"word","value":42}}
 ```
 
 ### Complete API overview

@@ -83,21 +83,6 @@ handle_request('EncodeCalldata', Req, _Context) ->
         _ -> {400, [], bad_request()}
     end;
 
-handle_request('DecodeData', Req, _Context) ->
-    case Req of
-        #{'SophiaBinaryData' :=
-              #{ <<"sophia-type">>  := Type
-               , <<"data">>  := Data
-               }} ->
-            case decode_data(Type, Data) of
-                {ok, Result} ->
-                    {200, [], #{data => Result}};
-                {error, Error} ->
-                    {400, [], mk_error_msg(Error)}
-            end;
-        _ -> {400, [], bad_request()}
-    end;
-
 handle_request('DecodeCalldataBytecode', Req, _Context) ->
     case Req of
         #{ 'DecodeCalldataBytecode' :=
@@ -317,45 +302,6 @@ encode_calldata(Source, Options, Function, Arguments) ->
             {ok, aeser_api_encoder:encode(contract_bytearray, Calldata)};
         Err = {error, _} ->
             Err
-    end.
-
-decode_data(Type, Data) ->
-    case aeser_api_encoder:safe_decode(contract_bytearray, Data) of
-        {error, _} ->
-            {error, <<"Data must be encoded as a contract_bytearray">>};
-        {ok, CallData} ->
-            try decode_data_(Type, CallData) of
-                {ok, _Result} = OK -> OK;
-                {error, _ErrorMsg} = Err -> Err
-            catch
-                _T:_E:_S ->
-                    String = io_lib:format("~p:~p ~p", [_T,_E,_S]),
-                    Error = << <<B>> || B <- "Bad argument: " ++ lists:flatten(String) >>,
-                    {error, Error}
-            end
-    end.
-
-decode_data_(Type, Data) ->
-    case parse_type(Type) of
-        {ok, VMType} ->
-            try aeb_heap:from_binary(VMType, Data) of
-                {ok, Term} ->
-                    try prepare_for_json(VMType, Term) of
-                        R -> {ok, R}
-                    catch throw:R -> R
-                    end;
-                {error, _} -> {error, <<"bad type/data">>}
-            catch _T:_E ->    {error, <<"bad argument">>}
-            end;
-        {error, _} = E -> E
-    end.
-
-parse_type(BinaryString) ->
-    String = unicode:characters_to_list(BinaryString, utf8),
-    case aeso_compiler:sophia_type_to_typerep(String) of
-        {ok, _Type} = R -> R;
-        {error, ErrorAtom} ->
-            {error, unicode:characters_to_binary(atom_to_list(ErrorAtom))}
     end.
 
 decode_callresult_bytecode(ErrOrRevert, CallValue, FunName, _Bytecode)

@@ -66,35 +66,6 @@ paths:
           schema:
             $ref: '#/definitions/CompilerErrors'
 
-  /decode-data:
-    post:
-      operationId: 'DecodeData'
-      description: 'Decode data as retuned by a contract call. - Legacy decoding'
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - in: body
-          name: body
-          description: Binary data in Sophia ABI format
-          required: true
-          schema:
-            $ref: '#/definitions/SophiaBinaryData'
-      responses:
-        '200':
-          description: Json encoded data
-          schema:
-            $ref: '#/definitions/SophiaJsonData'
-        '400':
-          description: Invalid data
-          schema:
-            $ref: '#/definitions/Error'
-        '400':
-          description: Invalid data
-          schema:
-            $ref: '#/definitions/CompilerErrors'
-
   /decode-call-result:
     post:
       operationId: 'DecodeCallResult'
