@@ -358,15 +358,6 @@ decode_calldata_fatecode(FunHash, Args, FCode) ->
     end.
 
 
-prepare_calldata_response(FunName, ArgType, VMArgs) ->
-    try #{ <<"type">>  := <<"tuple">>,
-           <<"value">> := ArgsList } = prepare_for_json(ArgType, VMArgs),
-        {200, [], #{ function  => FunName,
-                     arguments => ArgsList }}
-    catch _:_Reason ->
-        {400, [], mk_error_msg(<<"Error preparing JSON">>)}
-    end.
-
 decode_calldata_source(Calldata, FunName, Source, Options) ->
     COpts = compile_options(Options),
     case aeso_compiler:decode_calldata(binary_to_list(Source),
@@ -413,49 +404,6 @@ deserialize(Bytecode) ->
     catch _E:R ->
         {error, R}
     end.
-
-%% -- JSON representation for typed VM-value
-prepare_for_json(word, Integer) when is_integer(Integer) ->
-    #{ <<"type">> => <<"word">>,
-       <<"value">> => Integer};
-prepare_for_json(string, String) when is_binary(String) ->
-    #{ <<"type">> => <<"string">>,
-       <<"value">> => String};
-prepare_for_json({option, _T}, none) ->
-    #{ <<"type">> => <<"option">>,
-       <<"value">> => <<"None">>};
-prepare_for_json({option, T}, {some, E}) ->
-    #{ <<"type">> => <<"option">>,
-       <<"value">> => prepare_for_json(T,E) };
-prepare_for_json({tuple, Ts}, Es) ->
-    #{ <<"type">> => <<"tuple">>,
-       <<"value">> => [prepare_for_json(T,E)
-                       || {T,E} <-
-                              lists:zip(Ts, tuple_to_list(Es))] };
-prepare_for_json({list, T}, Es) ->
-    #{ <<"type">> => <<"list">>,
-       <<"value">> => [prepare_for_json(T,E) || E <- Es]};
-prepare_for_json(T = {variant, Cons}, R = {variant, Tag, Args}) when is_integer(Tag), Tag < length(Cons) ->
-    Ts = lists:nth(Tag + 1, Cons),
-    case length(Ts) == length(Args) of
-        true ->
-            #{ <<"type">> => <<"variant">>
-             , <<"value">> => [Tag | [prepare_for_json(ArgT, Arg)
-                                      || {ArgT, Arg} <- lists:zip(Ts, Args)]] };
-        false ->
-            String = io_lib:format("Type: ~p Res:~p", [T,R]),
-            Error = << <<B>> || B <- "Invalid Sophia type: " ++ lists:flatten(String) >>,
-            throw({error, Error})
-    end;
-prepare_for_json({map, KeyT, ValT}, Map) when is_map(Map) ->
-    #{ <<"type">> => <<"map">>,
-       <<"value">> => [ #{ <<"key">> => prepare_for_json(KeyT, K),
-                           <<"val">> => prepare_for_json(ValT, V) }
-                        || {K, V} <- maps:to_list(Map) ] };
-prepare_for_json(T, R) ->
-    String = io_lib:format("Type: ~p Res:~p", [T,R]),
-    Error = << <<B>> || B <- "Invalid VM-type: " ++ lists:flatten(String) >>,
-    throw({error, Error}).
 
 jo(T, V) -> #{ <<"type">> => atom_to_binary(T, utf8), <<"value">> => V }.
 
