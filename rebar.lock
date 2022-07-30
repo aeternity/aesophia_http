@@ -1,7 +1,7 @@
-{"1.1.0",
+{"1.2.0",
 [{<<"aebytecode">>,
   {git,"https://github.com/aeternity/aebytecode.git",
-       {ref,"0699f35b0398bac6cd4468da654d608375bd853d"}},
+       {ref,"8269dbd71e9011921c60141636f1baa270a0e784"}},
   1},
  {<<"aeserialization">>,
   {git,"https://github.com/aeternity/aeserialization.git",
@@ -9,7 +9,7 @@
   0},
  {<<"aesophia">>,
   {git,"https://github.com/aeternity/aesophia.git",
-       {ref,"cfcf0a8a81183d476c2f758b40a04c63e25812e9"}},
+       {ref,"f84242af6b1867fdada96c5f2ef86cf79589d237"}},
   0},
  {<<"base58">>,
   {git,"https://github.com/aeternity/erl-base58.git",
@@ -46,5 +46,9 @@
 {pkg_hash,[
  {<<"eblake2">>, <<"EC8AD20E438AAB3F2E8D5D118C366A0754219195F8A0F536587440F8F9BCF2EF">>},
  {<<"getopt">>, <<"C73A9FA687B217F2FF79F68A3B637711BB1936E712B521D8CE466B29CBF7808A">>},
- {<<"rfc3339">>, <<"1552DF616ACA368D982E9F085A0E933B6688A3F4938A671798978EC2C0C58730">>}]}
+ {<<"rfc3339">>, <<"1552DF616ACA368D982E9F085A0E933B6688A3F4938A671798978EC2C0C58730">>}]},
+{pkg_hash_ext,[
+ {<<"eblake2">>, <<"3C4D300A91845B25D501929A26AC2E6F7157480846FAB2347A4C11AE52E08A99">>},
+ {<<"getopt">>, <<"53E1AB83B9CEB65C9672D3E7A35B8092E9BDC9B3EE80721471A161C10C59959C">>},
+ {<<"rfc3339">>, <<"986D7F9BAC6891AA4D5051690058DE4E623245620BBEADA7F239F85C4DF8F23C">>}]}
 ].

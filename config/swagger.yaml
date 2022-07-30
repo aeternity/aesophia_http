@@ -1,7 +1,7 @@
 swagger: '2.0'
 info:
   description: 'This is the [Aeternity](https://www.aeternity.com/) compiler API.'
-  version: 6.1.0
+  version: 7.0.0
   title: Aeternity compiler
   termsOfService: 'https://www.aeternity.com/terms/'
   contact:
@@ -63,35 +63,6 @@ paths:
             $ref: '#/definitions/Error'
         '400':
           description: Invalid contract
-          schema:
-            $ref: '#/definitions/CompilerErrors'
-
-  /decode-data:
-    post:
-      operationId: 'DecodeData'
-      description: 'Decode data as retuned by a contract call. - Legacy decoding'
-      consumes:
-        - application/json
-      produces:
-        - application/json
-      parameters:
-        - in: body
-          name: body
-          description: Binary data in Sophia ABI format
-          required: true
-          schema:
-            $ref: '#/definitions/SophiaBinaryData'
-      responses:
-        '200':
-          description: Json encoded data
-          schema:
-            $ref: '#/definitions/SophiaJsonData'
-        '400':
-          description: Invalid data
-          schema:
-            $ref: '#/definitions/Error'
-        '400':
-          description: Invalid data
           schema:
             $ref: '#/definitions/CompilerErrors'
 
@@ -381,10 +352,6 @@ definitions:
   CompileOpts:
     type: object
     properties:
-      backend:
-        description: 'Compiler backend; fate | aevm'
-        type: string
-        enum: [fate, aevm]
       file_system:
         description: 'An explicit file system, mapping file names to file content'
         type: object
@@ -544,10 +511,6 @@ definitions:
       call-value:
         description: 'Call result value (ABI encoded data or error string)'
         type: string
-      backend:
-        description: 'Compiler backend; fate | aevm'
-        type: string
-        enum: [fate, aevm]
     required:
       - function
       - call-result
@@ -562,10 +525,6 @@ definitions:
       bytecode:
         description: 'Compiled contract'
         $ref: '#/definitions/EncodedByteArray'
-      backend:
-        description: 'Compiler backend; fate | aevm'
-        type: string
-        enum: [fate, aevm]
     required:
       - calldata
       - bytecode
