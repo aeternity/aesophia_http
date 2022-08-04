@@ -348,7 +348,6 @@ definitions:
         $ref: '#/definitions/CompileOpts'
     required:
       - code
-      - options
   CompileOpts:
     type: object
     properties:
@@ -568,7 +567,6 @@ definitions:
     required:
       - bytecode
       - source
-      - options
   DecodedCallresult:
     type: object
     properties:
