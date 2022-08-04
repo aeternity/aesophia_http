@@ -307,7 +307,7 @@ paths:
 
   /api-version:
     get:
-      operationId: 'APIVersion'
+      operationId: 'ApiVersion'
       description: 'Get the version of the API'
       produces:
         - application/json
@@ -315,7 +315,7 @@ paths:
         '200':
           description: 'Sophia compiler version'
           schema:
-            $ref: '#/definitions/APIVersion'
+            $ref: '#/definitions/ApiVersion'
         '500':
           description: 'Error'
           schema:
@@ -358,7 +358,7 @@ definitions:
       src_file:
         description: 'Name of contract source file - only used in error messages'
         type: string
-  APIVersion:
+  ApiVersion:
     type: object
     properties:
       api-version:
