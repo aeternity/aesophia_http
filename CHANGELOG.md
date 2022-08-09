@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [7.0.0]
 ### Changed
-- Updated to [Sophia 7.0.0](https://github.com/aeternity/aesophia/blob/master/CHANGELOG.md#700---2021-10-20)
+- Updated to [Sophia 7.0.0](https://github.com/aeternity/aesophia/blob/master/CHANGELOG.md#700)
 ### Removed
 - Support for AEVM
 - Backend parameters
