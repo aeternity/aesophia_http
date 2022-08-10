@@ -73,7 +73,7 @@ workflows:
             tags:
               only: /^v.*$/
       - docker_push_tag:
-          context: ae-dockerhub
+          context: ae-github
           requires:
             - build
             - verify_rebar_lock
