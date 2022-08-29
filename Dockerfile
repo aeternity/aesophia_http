@@ -1,4 +1,4 @@
-FROM aeternity/builder as builder
+FROM aeternity/builder:bionic-otp23 as builder
 
 # Add the whole project and compile it.
 ADD . /app
