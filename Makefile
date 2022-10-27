@@ -7,7 +7,7 @@ SWTEMP := $(shell mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
 HTTP_APP := apps/aesophia_http
 MAKE := make
 
-REBAR ?= rebar3
+REBAR ?= ./rebar3
 
 .PHONY: test docker clean distclean swagger-docs
 
