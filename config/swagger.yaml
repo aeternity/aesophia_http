@@ -40,7 +40,7 @@ paths:
   /compile:
     post:
       operationId: 'CompileContract'
-      description: 'Compile a sophia contract from source and return byte code'
+      description: 'Compile a sophia contract from source and return byte code and ACI'
       consumes:
         - application/json
       produces:
@@ -56,7 +56,7 @@ paths:
         '200':
           description: Byte code response
           schema:
-            $ref: '#/definitions/ByteCode'
+            $ref: '#/definitions/CompileResult'
         '400':
           description: Invalid data
           schema:
@@ -428,13 +428,18 @@ definitions:
   API:
     description: 'Swagger API description'
     type: object
-  ByteCode:
+  CompileResult:
     type: object
     properties:
       bytecode:
         $ref: '#/definitions/EncodedByteArray'
+      aci:
+        type: array
+        items:
+          type: object
     required:
       - bytecode
+      - aci
   SophiaCallResultInput:
     type: object
     properties:

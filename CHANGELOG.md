@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- `aci` property to the result of CompileContract with ACI formatted the same way as in aesophia_cli
 ### Changed
 ### Removed
 

@@ -70,8 +70,9 @@ handle_request('CompileContract', Req, _Context) ->
               #{ <<"code">> := Code } = Json } ->
             Options = maps:get(<<"options">>, Json, #{}),
             case compile_contract(Code, Options) of
-                 {ok, ByteCode} ->
-                     {200, [], #{bytecode => aeser_api_encoder:encode(contract_bytearray, ByteCode)}};
+                 {ok, ByteCode, Aci} ->
+                     ByteCodeEncoded = aeser_api_encoder:encode(contract_bytearray, ByteCode),
+                     {200, [], #{bytecode => ByteCodeEncoded, aci => Aci}};
                  {error, Errors} when is_list(Errors) ->
                      {400, [], mk_errors(Errors)};
                  {error, Msg} when is_binary(Msg) ->
@@ -290,9 +291,10 @@ generate_aci(Contract, Options) ->
 
 compile_contract(Contract, Options) ->
     Opts = compile_options(Options),
-    try aeso_compiler:from_string(binary_to_list(Contract), Opts) of
+    try aeso_compiler:from_string(binary_to_list(Contract), [{aci, json} | Opts]) of
         {ok, Map} ->
-            {ok, aeser_contract_code:serialize(Map)};
+            #{ aci := Aci } = Map,
+            {ok, aeser_contract_code:serialize(Map), Aci};
         Err = {error, _} ->
             Err
     catch _:R:S ->

@@ -99,7 +99,9 @@ end_per_testcase(_Case, _Config) ->
 
 identity_contract(_Config) ->
     %% Compile test contract "identity.aes"
-    {ok, _Code} = compile_test_contract("identity"),
+    {ok, _Code, Aci} = compile_test_contract("identity"),
+
+    ?assertMatch([_C], Aci),
 
     ok.
 
@@ -131,7 +133,7 @@ include_contract(_Config) ->
               end || Name <- Files ]),
     Opts = #{file_system => ExplicitFileSystem, src_file => <<"include.aes">>},
 
-    {ok, _Code} = compile_test_contract(Dir, "include", Opts),
+    {ok, _Code, _Aci} = compile_test_contract(Dir, "include", Opts),
 
     ok.
 
@@ -187,7 +189,7 @@ encode_calldata(_Config) ->
 decode_calldata_bytecode(_Config) ->
     {ok, ContractSrcBin} = read_test_contract("calldata"),
     ContractSrc = binary_to_list(ContractSrcBin),
-    {ok, Contract} = compile_test_contract("calldata"),
+    {ok, Contract, _Aci} = compile_test_contract("calldata"),
 
     DoEnc = fun(F, V) -> encode_calldata(ContractSrc, binary_to_list(F), [V]) end,
     Datas = maps:map(DoEnc, test_data()),
@@ -292,7 +294,7 @@ decode_call_result(_Config) ->
     [ Check(K) || K <- maps:keys(Expects) ].
 
 decode_call_result_bytecode(_Config) ->
-    {ok, Contract} = compile_test_contract("callresult"),
+    {ok, Contract, _Aci} = compile_test_contract("callresult"),
 
     Values = bin_test_data(),
 
@@ -306,7 +308,7 @@ decode_call_result_bytecode(_Config) ->
     [ Check(K) || K <- maps:keys(Expects) ].
 
 decode_call_result_bytecode_not_ok(_Config) ->
-    {ok, Contract} = compile_test_contract("callresult"),
+    {ok, Contract, _Aci} = compile_test_contract("callresult"),
     Map0 = #{bytecode => Contract, function => <<"foo">>},
 
     ErrVal = aeser_api_encoder:encode(contract_bytearray, <<"An error happened!">>),
@@ -324,7 +326,7 @@ decode_call_result_bytecode_not_ok(_Config) ->
     ok.
 
 validate_byte_code(_Config) ->
-    {ok, IdByteCode}  = compile_test_contract("identity"),
+    {ok, IdByteCode, _Aci}  = compile_test_contract("identity"),
     {ok, IdSource}    = read_test_contract("identity"),
     {ok, NotIdSource} = read_test_contract("callresult"),
     ?assertMatch({ok, 200, #{}},
@@ -407,7 +409,7 @@ compile_test_contract(Dir, Name, Opts) ->
     FileName = filename:join(Dir, Name ++ ".aes"),
     {ok, SophiaCode} = file:read_file(FileName),
     case get_contract_bytecode(SophiaCode, Opts) of
-        {ok, 200, #{<<"bytecode">> := Code}} -> {ok, Code};
+        {ok, 200, #{<<"bytecode">> := Code, <<"aci">> := Aci}} -> {ok, Code, Aci};
         {ok, 400, Errors} -> {error, Errors}
     end.
 
