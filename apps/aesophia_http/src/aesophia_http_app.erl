@@ -25,6 +25,7 @@ start(_StartType, _StartArgs) ->
 				 #{env => #{dispatch => Dispatch},
                    middlewares => [cowboy_router,
                                    aesophia_cors_middleware,
+                                   aesophia_cache_middleware,
                                    cowboy_handler]}),
     aesophia_http_sup:start_link().
 

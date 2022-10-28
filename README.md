@@ -81,7 +81,7 @@ contract="contract SimpleStorage =
 To get the ACI of the contract we use the `/aci` interface:
 
 ```
-curl -H "Content-Type: application/json" -d "{\"code\":\"$contract\",\"options\":{}}" -X POST http://localhost:3080/aci
+curl -H "Content-Type: application/json" -d "{\"code\":\"$contract\",\"options\":{}}" -X GET http://localhost:3080/aci
 ```
 Returns:
 ```
@@ -104,7 +104,7 @@ other contracts.
 We can now compile the contract and get the bytecode:
 
 ```
-url -H "Content-Type: application/json" -d "{\"code\":\"$contract\", \"options\":{}}" -X POST http://localhost:3080/compile
+url -H "Content-Type: application/json" -d "{\"code\":\"$contract\", \"options\":{}}" -X GET http://localhost:3080/compile
 ```
 Returns:
 ```
@@ -117,7 +117,7 @@ You can check that some particular bytecode, for instance obtained from the
 chain, was compiled from given source code, using the `validate-byte-code`
 endpoint:
 ```
-curl -H "Content-Type: application/json" -d '{"source":"contract Id = entrypoint id(x : int) = x","options":{},"bytecode":"cb_+GNGA6CBDP58NrY5L7PzZrlGZ0C8aqcXIYwqv2WMpyTg8IuBTsC3nv5E1kQfADcANwAaDoI/AQM//tjzDDgANwEHBwEBAJQvAhFE1kQfEWluaXQR2PMMOAlpZIIvAIU0LjAuMABqFanJ"}' -X POST http://localhost:3080/validate-byte-code
+curl -H "Content-Type: application/json" -d '{"source":"contract Id = entrypoint id(x : int) = x","options":{},"bytecode":"cb_+GNGA6CBDP58NrY5L7PzZrlGZ0C8aqcXIYwqv2WMpyTg8IuBTsC3nv5E1kQfADcANwAaDoI/AQM//tjzDDgANwEHBwEBAJQvAhFE1kQfEWluaXQR2PMMOAlpZIIvAIU0LjAuMABqFanJ"}' -X GET http://localhost:3080/validate-byte-code
 ```
 Returns:
 ```
@@ -132,7 +132,7 @@ Validating against source code with a different implementation of `id` returns:
 
 You can get the FATE assembler code for some particular bytecode:
 ```
-curl -H "Content-Type: application/json" -d '{"bytecode":"cb_+GNGA6CBDP58NrY5L7PzZrlGZ0C8aqcXIYwqv2WMpyTg8IuBTsC3nv5E1kQfADcANwAaDoI/AQM//tjzDDgANwEHBwEBAJQvAhFE1kQfEWluaXQR2PMMOAlpZIIvAIU0LjAuMABqFanJ"}' -X POST http://localhost:3080/fate-assembler
+curl -H "Content-Type: application/json" -d '{"bytecode":"cb_+GNGA6CBDP58NrY5L7PzZrlGZ0C8aqcXIYwqv2WMpyTg8IuBTsC3nv5E1kQfADcANwAaDoI/AQM//tjzDDgANwEHBwEBAJQvAhFE1kQfEWluaXQR2PMMOAlpZIIvAIU0LjAuMABqFanJ"}' -X GET http://localhost:3080/fate-assembler
 ```
 Returns:
 ```
@@ -145,7 +145,7 @@ To encode the call data necessary to call the function `set` with the
 argument `42`:
 
 ```
-curl -H "Content-Type: application/json" -d "{\"function\":\"set\",\"arguments\":[\"42\"],\"source\":\"$contract\", \"options\":{}}" -X POST http://localhost:3080/encode-calldata
+curl -H "Content-Type: application/json" -d "{\"function\":\"set\",\"arguments\":[\"42\"],\"source\":\"$contract\", \"options\":{}}" -X GET http://localhost:3080/encode-calldata
 ```
 Returns:
 ```
@@ -160,7 +160,7 @@ Call data from transactions can be decoded in two ways, either using the contrac
 
 Example:
 ```
-curl -H "Content-Type: application/json" -d "{\"calldata\":\"cb_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACA6hZQte0c6B/XQTuHZwWpc6rFreRzqkolhGkTD+eW6BwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACoA4Uun\",\"bytecode\":\"cb_+QYYRgKgCTTJlUBVAUHWm6tXQKIwDZi3yvR+jeNv8JCPQzLT6xT5BKX5AUmgOoWULXtHOgf10E7h2cFqXOqxa3kc6pKJYRpEw/nlugeDc2V0uMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAoP//////////////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC4YAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP///////////////////////////////////////////jJoEnsSQdsAgNxJqQzA+rc5DsuLDKUV7ETxQp+ItyJgJS3g2dldLhgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA///////////////////////////////////////////uEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+QKLoOIjHWzfyTkW3kyzqYV79lz0D8JW9KFJiz9+fJgMGZNEhGluaXS4wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACg//////////////////////////////////////////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALkBoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEA//////////////////////////////////////////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYD//////////////////////////////////////////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAuQFEYgAAj2IAAMKRgICAUX9J7EkHbAIDcSakMwPq3OQ7LiwylFexE8UKfiLciYCUtxRiAAE5V1CAgFF/4iMdbN/JORbeTLOphXv2XPQPwlb0oUmLP358mAwZk0QUYgAA0VdQgFF/OoWULXtHOgf10E7h2cFqXOqxa3kc6pKJYRpEw/nlugcUYgABG1dQYAEZUQBbYAAZWWAgAZCBUmAgkANgAFmQgVKBUllgIAGQgVJgIJADYAOBUpBZYABRWVJgAFJgAPNbYACAUmAA81tgAFFRkFZbYCABUVGQUIOSUICRUFCAWZCBUllgIAGQgVJgIJADYAAZWWAgAZCBUmAgkANgAFmQgVKBUllgIAGQgVJgIJADYAOBUoFSkFCQVltgIAFRUVlQgJFQUGAAUYFZkIFSkFBgAFJZkFCQVltQUFlQUGIAAMpWhTIuMC4w4czHnw==\"}" -X POST http://localhost:3080/decode-calldata/bytecode
+curl -H "Content-Type: application/json" -d "{\"calldata\":\"cb_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACA6hZQte0c6B/XQTuHZwWpc6rFreRzqkolhGkTD+eW6BwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACoA4Uun\",\"bytecode\":\"cb_+QYYRgKgCTTJlUBVAUHWm6tXQKIwDZi3yvR+jeNv8JCPQzLT6xT5BKX5AUmgOoWULXtHOgf10E7h2cFqXOqxa3kc6pKJYRpEw/nlugeDc2V0uMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAoP//////////////////////////////////////////AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC4YAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP///////////////////////////////////////////jJoEnsSQdsAgNxJqQzA+rc5DsuLDKUV7ETxQp+ItyJgJS3g2dldLhgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA///////////////////////////////////////////uEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA+QKLoOIjHWzfyTkW3kyzqYV79lz0D8JW9KFJiz9+fJgMGZNEhGluaXS4wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACg//////////////////////////////////////////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAALkBoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEA//////////////////////////////////////////8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYD//////////////////////////////////////////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAuQFEYgAAj2IAAMKRgICAUX9J7EkHbAIDcSakMwPq3OQ7LiwylFexE8UKfiLciYCUtxRiAAE5V1CAgFF/4iMdbN/JORbeTLOphXv2XPQPwlb0oUmLP358mAwZk0QUYgAA0VdQgFF/OoWULXtHOgf10E7h2cFqXOqxa3kc6pKJYRpEw/nlugcUYgABG1dQYAEZUQBbYAAZWWAgAZCBUmAgkANgAFmQgVKBUllgIAGQgVJgIJADYAOBUpBZYABRWVJgAFJgAPNbYACAUmAA81tgAFFRkFZbYCABUVGQUIOSUICRUFCAWZCBUllgIAGQgVJgIJADYAAZWWAgAZCBUmAgkANgAFmQgVKBUllgIAGQgVJgIJADYAOBUoFSkFCQVltgIAFRUVlQgJFQUGAAUYFZkIFSkFBgAFJZkFCQVltQUFlQUGIAAMpWhTIuMC4w4czHnw==\"}" -X GET http://localhost:3080/decode-calldata/bytecode
 ```
 
 Returns:
@@ -171,7 +171,7 @@ Returns:
 And secondly, using the Sophia contract source which returns the Sophia types and values:
 
 ```
-curl -H "Content-Type: application/json" -d "{\"calldata\":\"cb_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACA6hZQte0c6B/XQTuHZwWpc6rFreRzqkolhGkTD+eW6BwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACoA4Uun\",\"function\":\"set\",\"source\":\"$contract\"}" -X POST http://localhost:3080/decode-calldata/source
+curl -H "Content-Type: application/json" -d "{\"calldata\":\"cb_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACA6hZQte0c6B/XQTuHZwWpc6rFreRzqkolhGkTD+eW6BwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACoA4Uun\",\"function\":\"set\",\"source\":\"$contract\"}" -X GET http://localhost:3080/decode-calldata/source
 ```
 
 Returns:
@@ -183,7 +183,7 @@ Returns:
 You can also decode the return value of a contract call:
 
 ```
-curl -H "Content-Type: application/json" -d "{\"source\":\"$contract\",\"function\":\"get\", \"call-result\":\"ok\", \"call-value\":\"cb_VNLOFXc=\"}" -X POST http://localhost:3080/decode-call-result
+curl -H "Content-Type: application/json" -d "{\"source\":\"$contract\",\"function\":\"get\", \"call-result\":\"ok\", \"call-value\":\"cb_VNLOFXc=\"}" -X GET http://localhost:3080/decode-call-result
 ```
 
 Returns:
@@ -194,7 +194,7 @@ Returns:
 The contract call result can also be decoded using the `bytecode` as a starting point:
 
 ```
-curl -H "Content-Type: application/json" -d "{\"bytecode\":\"cb_+JFGA6DcSHcAbyhLqfbIDJRe1S7ZJLCZQJBUuvMmCLK5OirpHsC4YLg8/i+GW9kANwAHKCwAggD+RNZEHwA3AQc3AAwBACcMAhoCggEDP/7oxF62ADcBBzcADAEAJwwCGgKCAQM/ni8DES+GW9kNZ2V0EUTWRB8RaW5pdBHoxF62DXNldIIvAIk0LjAuMC1yYzQAPwYsew==\",\"function\":\"get\", \"call-result\":\"ok\", \"call-value\":\"cb_VNLOFXc=\"}" -X POST http://localhost:3080/decode-call-result/bytecode
+curl -H "Content-Type: application/json" -d "{\"bytecode\":\"cb_+JFGA6DcSHcAbyhLqfbIDJRe1S7ZJLCZQJBUuvMmCLK5OirpHsC4YLg8/i+GW9kANwAHKCwAggD+RNZEHwA3AQc3AAwBACcMAhoCggEDP/7oxF62ADcBBzcADAEAJwwCGgKCAQM/ni8DES+GW9kNZ2V0EUTWRB8RaW5pdBHoxF62DXNldIIvAIk0LjAuMC1yYzQAPwYsew==\",\"function\":\"get\", \"call-result\":\"ok\", \"call-value\":\"cb_VNLOFXc=\"}" -X GET http://localhost:3080/decode-call-result/bytecode
 ```
 
 Returns:
@@ -206,7 +206,7 @@ Returns:
 You can extract the compiler version that was used to compile some particular bytecode:
 
 ```
-curl -H "Content-Type: application/json" -d '{"bytecode":"cb_+GNGA6CBDP58NrY5L7PzZrlGZ0C8aqcXIYwqv2WMpyTg8IuBTsC3nv5E1kQfADcANwAaDoI/AQM//tjzDDgANwEHBwEBAJQvAhFE1kQfEWluaXQR2PMMOAlpZIIvAIU0LjAuMABqFanJ"}' -X POST http://localhost:3080/compiler-version
+curl -H "Content-Type: application/json" -d '{"bytecode":"cb_+GNGA6CBDP58NrY5L7PzZrlGZ0C8aqcXIYwqv2WMpyTg8IuBTsC3nv5E1kQfADcANwAaDoI/AQM//tjzDDgANwEHBwEBAJQvAhFE1kQfEWluaXQR2PMMOAlpZIIvAIU0LjAuMABqFanJ"}' -X GET http://localhost:3080/compiler-version
 ```
 
 Returns:

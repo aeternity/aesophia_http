@@ -9,7 +9,7 @@ info:
 basePath: /
 paths:
   /aci:
-    post:
+    get:
       operationId: 'GenerateACI'
       description: 'Generate an Aeternity Contract Interface (ACI) for contract'
       consumes:
@@ -38,7 +38,7 @@ paths:
             $ref: '#/definitions/CompilerErrors'
 
   /compile:
-    post:
+    get:
       operationId: 'CompileContract'
       description: 'Compile a sophia contract from source and return byte code'
       consumes:
@@ -67,7 +67,7 @@ paths:
             $ref: '#/definitions/CompilerErrors'
 
   /decode-call-result:
-    post:
+    get:
       operationId: 'DecodeCallResult'
       description: 'Decode the result of contract call'
       consumes:
@@ -96,7 +96,7 @@ paths:
             $ref: '#/definitions/CompilerErrors'
 
   /decode-call-result/bytecode:
-    post:
+    get:
       operationId: 'DecodeCallResultBytecode'
       description: 'Decode the result of contract call from Bytecode'
       consumes:
@@ -125,7 +125,7 @@ paths:
             $ref: '#/definitions/CompilerErrors'
 
   /encode-calldata:
-    post:
+    get:
       operationId: 'EncodeCalldata'
       description: 'Encode Sophia function call according to sophia ABI.'
       consumes:
@@ -154,7 +154,7 @@ paths:
             $ref: '#/definitions/CompilerErrors'
 
   /decode-calldata/bytecode:
-    post:
+    get:
       operationId: 'DecodeCalldataBytecode'
       description: 'Identify function name and arguments in Calldata for a compiled contract'
       consumes:
@@ -183,7 +183,7 @@ paths:
             $ref: '#/definitions/Error'
 
   /decode-calldata/source:
-    post:
+    get:
       operationId: 'DecodeCalldataSource'
       description: 'Identify function name and arguments in Calldata for a (partial) contract'
       consumes:
@@ -212,7 +212,7 @@ paths:
             $ref: '#/definitions/CompilerErrors'
 
   /fate-assembler:
-    post:
+    get:
       operationId: 'GetFateAssemblerCode'
       description: 'Get FATE assembler code from bytecode'
       consumes:
@@ -238,7 +238,7 @@ paths:
 
 
   /validate-byte-code:
-    post:
+    get:
       operationId: 'ValidateByteCode'
       description: 'Verify that an encoded byte array is the result of compiling a given contract'
       consumes:
@@ -265,7 +265,7 @@ paths:
             $ref: '#/definitions/CompilerErrors'
 
   /compiler-version:
-    post:
+    get:
       operationId: 'GetCompilerVersion'
       description: 'Extract compiler version from bytecode'
       consumes:

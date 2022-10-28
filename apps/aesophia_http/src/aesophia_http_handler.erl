@@ -20,7 +20,7 @@ init(Req, OperationId) ->
     {cowboy_rest, Req, State}.
 
 allowed_methods(Req, State) ->
-    Methods = [<<"GET">>,<<"POST">>],
+    Methods = [<<"GET">>],
     {Methods,Req,State}.
 
 content_types_accepted(Req, State) ->

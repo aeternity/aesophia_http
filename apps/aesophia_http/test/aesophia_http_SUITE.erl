@@ -475,58 +475,58 @@ do_get_fate_assembler(CB) ->
 
 get_contract_bytecode(SourceCode, Opts) ->
     Host = internal_address(),
-    http_request(Host, post, "compile",
+    http_request(Host, in_body, "compile",
                  #{ <<"code">> => SourceCode, <<"options">> => Opts }).
 
 get_aci(SourceCode, Opts) ->
     Host = internal_address(),
-    http_request(Host, post, "aci",
+    http_request(Host, in_body, "aci",
                  #{ <<"code">> => SourceCode, <<"options">> => Opts }).
 
 
 get_encode_calldata(Request) ->
     Host = internal_address(),
-    http_request(Host, post, "encode-calldata", Request).
+    http_request(Host, in_body, "encode-calldata", Request).
 
 get_decode_calldata_bytecode(Request) ->
     Host = internal_address(),
-    http_request(Host, post, "decode-calldata/bytecode", Request).
+    http_request(Host, in_body, "decode-calldata/bytecode", Request).
 
 get_decode_calldata_source(Request) ->
     Host = internal_address(),
-    http_request(Host, post, "decode-calldata/source", Request).
+    http_request(Host, in_body, "decode-calldata/source", Request).
 
 get_decode_call_result(Request) ->
     Host = internal_address(),
-    http_request(Host, post, "decode-call-result", Request).
+    http_request(Host, in_body, "decode-call-result", Request).
 
 get_decode_call_result_bytecode(Request) ->
     Host = internal_address(),
-    http_request(Host, post, "decode-call-result/bytecode", Request).
+    http_request(Host, in_body, "decode-call-result/bytecode", Request).
 
 get_validate_byte_code(Request) ->
     Host = internal_address(),
-    http_request(Host, post, "validate-byte-code", Request).
+    http_request(Host, in_body, "validate-byte-code", Request).
 
 get_fate_assembler(Request) ->
     Host = internal_address(),
-    http_request(Host, post, "fate-assembler", Request).
+    http_request(Host, in_body, "fate-assembler", Request).
 
 get_compiler_version(Request) ->
     Host = internal_address(),
-    http_request(Host, post, "compiler-version", Request).
+    http_request(Host, in_body, "compiler-version", Request).
 
 get_api_version() ->
     Host = internal_address(),
-    http_request(Host, get, "api-version", []).
+    http_request(Host, in_query, "api-version", []).
 
 get_version() ->
     Host = internal_address(),
-    http_request(Host, get, "version", []).
+    http_request(Host, in_query, "version", []).
 
 get_api() ->
     Host = internal_address(),
-    http_request(Host, get, "api", []).
+    http_request(Host, in_query, "api", []).
 
 %% ============================================================
 %% private functions
@@ -536,13 +536,13 @@ internal_address() ->
     {ok, Port} = application:get_env(aesophia_http, port),
     "http://127.0.0.1:" ++ integer_to_list(Port).
 
-http_request(Host, get, Path, Params) ->
+http_request(Host, in_query, Path, Params) ->
     URL = binary_to_list(
             iolist_to_binary([Host, "/", Path, encode_get_params(Params)])),
     ct:log("GET ~p", [URL]),
     R = httpc_request(get, {URL, []}, [], []),
     process_http_return(R);
-http_request(Host, post, Path, Params) ->
+http_request(Host, in_body, Path, Params) ->
     URL = binary_to_list(iolist_to_binary([Host, "/", Path])),
     {Type, Body} = case Params of
                        Map when is_map(Map) ->
@@ -552,8 +552,7 @@ http_request(Host, post, Path, Params) ->
                            {"application/x-www-form-urlencoded",
                             http_uri:quote(Path)}
                    end,
-    %% lager:debug("Type = ~p; Body = ~p", [Type, Body]),
-    ct:log("POST ~p, type ~p, Body ~p", [URL, Type, Body]),
+    ct:log("GET ~p, type ~p, Body ~p", [URL, Type, Body]),
     R = httpc_request(post, {URL, [], Type, Body}, [], []),
     process_http_return(R).
 
