@@ -43,7 +43,7 @@ $(SWAGGER_DOCS_DIR): |$(SWAGGER_UI_GIT_DIR)/.git
 	@mkdir -p $(SWAGGER_DOCS_DIR)
 	@cp -p $(SWAGGER_UI_GIT_DIR)/dist/* $(SWAGGER_DOCS_DIR)
 	@cp -p $(HTTP_APP)/priv/swagger.json $(SWAGGER_DOCS_DIR)
-	@sed -ibkp 's/https:\/\/petstore.swagger.io\/v2\/swagger.json/swagger.json/g' $(SWAGGER_DOCS_DIR)/index.html
+	@sed -ibkp 's/https:\/\/petstore.swagger.io\/v2\/swagger.json/swagger.json/g' $(SWAGGER_DOCS_DIR)/swagger-initializer.js
 
 updateswagger:
 	@if [ -f $(SWAGGER_DOCS_DIR)/swagger.json ]; then \
