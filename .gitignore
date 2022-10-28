@@ -21,4 +21,3 @@ rebar3.crashdump
 *.aes~
 apps/aesophia_http/priv
 apps/aesophia_http/src/endpoints.erl
-swagger/swagger-codegen-cli-2.3.1.jar
