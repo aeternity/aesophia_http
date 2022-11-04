@@ -1,6 +1,7 @@
 -module(aesophia_http_handler).
 
 -include_lib("aebytecode/include/aeb_fate_data.hrl").
+-include_lib("kernel/include/logger.hrl").
 
 -export([init/2,
          handle_request_json/2,content_types_provided/2,
@@ -32,6 +33,7 @@ content_types_provided(Req, State) ->
 handle_request_json(Req0, State = #state{ validator = Validator,
                                           spec = Spec,
                                           operation_id = OperationId }) ->
+    T0 = os:timestamp(),
     Method = cowboy_req:method(Req0),
     try aesophia_http_api_validate:request(OperationId, Method, Req0, Validator) of
         {ok, Params, Req1} ->
@@ -41,6 +43,17 @@ handle_request_json(Req0, State = #state{ validator = Validator,
             _ = aesophia_http_api_validate:response(OperationId, Method, Code, Body, Validator),
 
             Req = cowboy_req:reply(Code, to_headers(Headers), jsx:encode(Body), Req1),
+            T = timer:now_diff(os:timestamp(), T0),
+            {Peer, _} = cowboy_req:peer(Req),
+            Method    = cowboy_req:method(Req),
+            Path      = cowboy_req:path(Req),
+
+            case T > 1_000_000 of
+                true ->
+                    ?LOG_WARNING("[~p]: ~p ~p (=> ~p in ~.2f ms)", [Peer, Method, Path, Code, T / 1000.0]);
+                false ->
+                    ?LOG_INFO("[~p]: ~s ~s (=> ~p in ~.2f ms)", [Peer, Method, Path, Code, T / 1000.0])
+            end,
             {stop, Req, State};
         {error, Reason, Req1} ->
             Body = jsx:encode(to_error(Reason)),
