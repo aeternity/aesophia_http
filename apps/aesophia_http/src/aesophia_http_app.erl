@@ -17,7 +17,7 @@
 start(_StartType, _StartArgs) ->
     Paths = get_paths(),
     {ok,Port} = application:get_env(port),      %Get the port
-    io:format("Port: ~p\n", [Port]),
+    logger:info("Port: ~p", [Port]),
     Dispatch = cowboy_router:compile([
 				      {'_',Paths}
 				     ]),
