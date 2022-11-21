@@ -4,7 +4,7 @@ executors:
   aebuilder:
     docker:
       - image: aeternity/builder:bionic-otp23
-        user: builder
+        user: root
     working_directory: ~/src
   docker_builder:
     docker:
@@ -23,6 +23,11 @@ jobs:
   build:
     executor: aebuilder
     steps:
+      - run:
+          name: Install yq
+          command: |
+            curl https://github.com/mikefarah/yq/releases/download/v4.30.4/yq_linux_amd64 -Lo /usr/bin/yq
+            chmod +x /usr/bin/yq
       - checkout
       - restore_cache:
           keys:

@@ -1,9 +1,5 @@
-SWAGGER_CODEGEN_CLI_V = 2.3.1
-SWAGGER_CODEGEN_CLI = swagger/swagger-codegen-cli-$(SWAGGER_CODEGEN_CLI_V).jar
-SWAGGER_CODEGEN = java -jar $(SWAGGER_CODEGEN_CLI)
 SWAGGER_ENDPOINTS_SPEC = apps/aesophia_http/src/endpoints.erl
 
-SWTEMP := $(shell mktemp -d 2>/dev/null || mktemp -d -t 'mytmpdir')
 HTTP_APP := apps/aesophia_http
 MAKE := make
 
@@ -18,19 +14,17 @@ test: swagger
 	@($(REBAR) eunit)
 	@($(REBAR) ct)
 
-swagger: $(SWAGGER_CODEGEN_CLI) $(HTTP_APP)/priv/swagger.json $(SWAGGER_ENDPOINTS_SPEC)
+swagger: $(HTTP_APP)/priv/oas3.json $(HTTP_APP)/priv/swagger.json $(SWAGGER_ENDPOINTS_SPEC)
+
+$(HTTP_APP)/priv/oas3.json: config/oas3.yaml
+	@mkdir -p $(HTTP_APP)/priv
+	@yq config/oas3.yaml -o json > $(HTTP_APP)/priv/oas3.json
 
 $(HTTP_APP)/priv/swagger.json: config/swagger.yaml
-	@$(SWAGGER_CODEGEN) generate -i $< -l erlang-server -o $(SWTEMP)
-	@echo "Swagger tempdir: $(SWTEMP)"
-	@( mkdir -p $(HTTP_APP)/priv && cp $(SWTEMP)/priv/swagger.json $(HTTP_APP)/priv/; )
-	@$(MAKE) updateswagger
-	@rm -fr $(SWTEMP)
+	@mkdir -p $(HTTP_APP)/priv
+	@yq config/swagger.yaml -o json > $(HTTP_APP)/priv/swagger.json
 
-$(SWAGGER_CODEGEN_CLI):
-	curl -fsS --create-dirs -o $@ https://repo1.maven.org/maven2/io/swagger/swagger-codegen-cli/$(SWAGGER_CODEGEN_CLI_V)/swagger-codegen-cli-$(SWAGGER_CODEGEN_CLI_V).jar
-
-$(SWAGGER_ENDPOINTS_SPEC): config/swagger.yaml
+$(SWAGGER_ENDPOINTS_SPEC): config/oas3.yaml
 	$(REBAR) swagger_endpoints
 
 SWAGGER_UI_GIT = https://github.com/swagger-api/swagger-ui.git
@@ -39,16 +33,11 @@ SWAGGER_DOCS_DIR = $(HTTP_APP)/priv/swagger-docs
 
 swagger-docs: $(SWAGGER_DOCS_DIR)
 
-$(SWAGGER_DOCS_DIR): |$(SWAGGER_UI_GIT_DIR)/.git
+$(SWAGGER_DOCS_DIR): |$(SWAGGER_UI_GIT_DIR)/.git $(HTTP_APP)/priv/oas3.json
 	@mkdir -p $(SWAGGER_DOCS_DIR)
 	@cp -p $(SWAGGER_UI_GIT_DIR)/dist/* $(SWAGGER_DOCS_DIR)
-	@cp -p $(HTTP_APP)/priv/swagger.json $(SWAGGER_DOCS_DIR)
-	@sed -ibkp 's/https:\/\/petstore.swagger.io\/v2\/swagger.json/swagger.json/g' $(SWAGGER_DOCS_DIR)/index.html
-
-updateswagger:
-	@if [ -f $(SWAGGER_DOCS_DIR)/swagger.json ]; then \
-	        cp -p $(HTTP_APP)/priv/swagger.json $(SWAGGER_DOCS_DIR); \
-	fi
+	@cp -p $(HTTP_APP)/priv/oas3.json $(SWAGGER_DOCS_DIR)
+	@sed -ibkp 's/https:\/\/petstore.swagger.io\/v2\/swagger.json/oas3.json/g' $(SWAGGER_DOCS_DIR)/swagger-initializer.js
 
 $(SWAGGER_UI_GIT_DIR)/.git:
 	@git clone -n --depth 1 $(SWAGGER_UI_GIT) $(SWAGGER_UI_GIT_DIR)

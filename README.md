@@ -6,7 +6,7 @@ contracts and generating ACI data for contract. The examples show
 HTTP interface uses port 3080, settable with application variable
 aesophia_http.port.
 
-Interface paths (see the `config/swagger.yaml` for details):
+Interface paths (see the `config/oas3.yaml` for details):
 
 /aci - generate ACI format for contract in both JSON encoded and textual decoded forms. Tags 'code' and 'options'.
 

@@ -1,5 +1,8 @@
 FROM aeternity/builder:bionic-otp23 as builder
 
+RUN curl https://github.com/mikefarah/yq/releases/download/v4.30.4/yq_linux_amd64 -Lo /usr/bin/yq \
+    && chmod +x /usr/bin/yq
+
 # Add the whole project and compile it.
 ADD . /app
 RUN cd /app && make prod-build

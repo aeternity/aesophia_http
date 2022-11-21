@@ -8,14 +8,14 @@
          allowed_methods/2,content_types_accepted/2
         ]).
 
--record(state, { spec :: jsx:json_text()
+-record(state, { specs :: map()
                , validator :: jesse_state:state()
                , operation_id :: atom() }).
 
 init(Req, OperationId) ->
-    JsonSpec = aesophia_http_api_validate:json_spec(),
-    Validator = aesophia_http_api_validate:validator(JsonSpec),
-    State = #state{ spec = JsonSpec,
+    JsonSpecs = aesophia_http_api_validate:json_specs(),
+    Validator = aesophia_http_api_validate:validator(),
+    State = #state{ specs = JsonSpecs,
                     validator = Validator,
                     operation_id = OperationId },
     {cowboy_rest, Req, State}.
@@ -31,16 +31,16 @@ content_types_provided(Req, State) ->
     {[{<<"application/json">>, handle_request_json}], Req, State}.
 
 handle_request_json(Req0, State = #state{ validator = Validator,
-                                          spec = Spec,
+                                          specs = Specs,
                                           operation_id = OperationId }) ->
     T0 = os:timestamp(),
     Method = cowboy_req:method(Req0),
-    try aesophia_http_api_validate:request(OperationId, Method, Req0, Validator) of
+    try aesophia_http_api_validate:request(OperationId, Req0, Validator) of
         {ok, Params, Req1} ->
-            Context = #{ spec => Spec },
+            Context = #{ specs => Specs },
             {Code, Headers, Body} = handle_request(OperationId, Params, Context),
 
-            _ = aesophia_http_api_validate:response(OperationId, Method, Code, Body, Validator),
+            _ = aesophia_http_api_validate:response(OperationId, Code, Body, Validator),
 
             Req = cowboy_req:reply(Code, to_headers(Headers), jsx:encode(Body), Req1),
             T = timer:now_diff(os:timestamp(), T0),
@@ -252,15 +252,22 @@ handle_request('Version', _Req, _Context) ->
             {500, [], #{reason => <<"Internal error: Could not find the version!?">>}}
     end;
 
-handle_request('ApiVersion', _Req, #{ spec := Spec }) ->
-    case jsx:decode(Spec, [return_maps]) of
+handle_request('ApiVersion', _Req, #{ specs := Specs }) ->
+    #{ oas3 := Oas3 } = Specs,
+    case jsx:decode(Oas3, [return_maps]) of
         #{ <<"info">> := #{ <<"version">> := Vsn } } ->
             {200, [], #{'api-version' => Vsn}};
         _ ->
             {500, [], #{reason => <<"Internal error: Could not find the version!?">>}}
     end;
 
-handle_request('Api', _Req, #{ spec := Spec }) ->
+handle_request('Api', Req, #{ specs := Specs }) ->
+    #{ oas3 := Oas3, swagger := Swagger } = Specs,
+    Spec =
+        case maps:get('oas3', Req) of
+            true -> Oas3;
+            false -> Swagger
+        end,
     {200, [], jsx:decode(Spec, [return_maps])}.
 
 to_old_aci_item_def(C0) ->

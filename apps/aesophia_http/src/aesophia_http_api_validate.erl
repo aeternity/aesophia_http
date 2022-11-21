@@ -1,20 +1,23 @@
 -module(aesophia_http_api_validate).
 
--export([request/4]).
--export([response/5]).
+-export([request/3]).
+-export([response/4]).
 -export([validator/0, validator/1]).
--export([json_spec/0]).
+-export([json_specs/0]).
 
--spec json_spec() -> jsx:json_text().
-json_spec() ->
+-spec json_specs() -> map().
+json_specs() ->
     {ok, AppName} = application:get_application(?MODULE),
-    Filename = filename:join(code:priv_dir(AppName), "swagger.json"),
-    {ok, Json} = file:read_file(Filename),
-    Json.
+    FilenameSwagger = filename:join(code:priv_dir(AppName), "swagger.json"),
+    {ok, Swagger} = file:read_file(FilenameSwagger),
+    FilenameOas3 = filename:join(code:priv_dir(AppName), "oas3.json"),
+    {ok, Oas3} = file:read_file(FilenameOas3),
+    #{swagger => Swagger, oas3 => Oas3}.
 
 -spec validator() -> jesse_state:state().
 validator() ->
-    validator(json_spec()).
+    #{ oas3 := Oas3 } = json_specs(),
+    validator(Oas3).
 
 -spec validator(jsx:json_text()) -> jesse_state:state().
 validator(Json) ->
@@ -23,17 +26,15 @@ validator(Json) ->
 
 -spec response(
     OperationId :: atom(),
-    Methohd :: binary(),
     Code :: 200..599,
     Response :: jesse:json_term(),
     Validator :: jesse_state:state()
     ) -> ok | no_return().
 
-response(_OperationId, _Method0, Code, _Response, _Validator) when Code >= 500 andalso Code < 600 ->
+response(_OperationId, Code, _Response, _Validator) when Code >= 500 andalso Code < 600 ->
     ok;
-response(OperationId, Method0, Code, Response, Validator) ->
-    Method = to_method(Method0),
-    #{responses := Resps} = maps:get(Method, endpoints:operation(OperationId)),
+response(OperationId, Code, Response, Validator) ->
+    #{responses := Resps} = endpoints:operation(OperationId),
     case maps:get(Code, Resps, not_found) of
         undefined -> ok;
         not_found -> throw({error, {Code, unspecified_response_code}});
@@ -53,21 +54,19 @@ response(OperationId, Method0, Code, Response, Validator) ->
 
 -spec request(
     OperationId :: atom(),
-    Methohd :: binary(),
     Req :: cowboy_req:req(),
     Validator :: jesse_state:state()
     ) ->
     {ok, Model :: map(), cowboy_req:req()}
     | {error, Reason :: any(), cowboy_req:req()}.
 
-request(OperationId, Method0, Req, Validator) ->
-    Method = to_method(Method0),
-    #{parameters := Params} = maps:get(Method, endpoints:operation(OperationId)),
+request(OperationId, Req, Validator) ->
+    #{parameters := Params} = endpoints:operation(OperationId),
     params(Params, #{}, Req, Validator).
 
 params([], Model, Req, _) -> {ok, Model, Req};
 params([Param | Params], Model, Req0, Validator) ->
-   case populate_param(Param, Req0, Validator) of
+    case populate_param(Param, Req0, Validator) of
         {ok, K, V, Req} ->
             NewModel = maps:put(to_atom(K), V, Model),
             params(Params, NewModel, Req, Validator);
@@ -78,7 +77,7 @@ params([Param | Params], Model, Req0, Validator) ->
 populate_param(Param, Req, Validator) ->
     In = proplists:get_value("in", Param),
     Name = proplists:get_value("name", Param),
-    case get_param_value(In, Name, Req) of
+    case get_param_value(In, Name, Req, Param) of
         {ok, Value, Req1} ->
             case prepare_param(Param, Value, Name, Validator) of
                 {ok, NewName, NewValue} -> {ok, NewName, NewValue, Req1};
@@ -148,10 +147,10 @@ prepare_param_({"type", "integer"}, Value, Name, _) ->
     end;
 prepare_param_({"type", "string"}, _, _, _) -> ok;
 % schema
-prepare_param_({"schema", #{<<"$ref">> := <<"/definitions/", Ref/binary>>}},
+prepare_param_({"schema", #{<<"$ref">> := <<"/components/schemas/", Ref/binary>>}},
                Value, Name, Validator) ->
     try
-        Schema = #{<<"$ref">> => <<"#/definitions/", Ref/binary>>},
+        Schema = #{<<"$ref">> => <<"#/components/schemas/", Ref/binary>>},
         jesse_schema_validator:validate_with_state(Schema, Value, Validator),
         {ok, Value, Ref}
     catch
@@ -187,7 +186,7 @@ prepare_param_({"maximum", Max}, Value, Name, _) ->
         false -> param_error({not_in_range, Value}, Name)
     end.
 
-get_param_value("body", _, Req0) ->
+get_param_value("body", _, Req0, _Param) ->
     %% Cowboy will attempt to read up to ~5MB of data for up to 10s. The call
     %% will return when there is up to ~5MB of data or at the end of the 10s
     %% period. If there is more data to read (after reading the initial 5MB),
@@ -208,14 +207,14 @@ get_param_value("body", _, Req0) ->
             {error, Reason} = param_error({body_too_big, Body}, <<>>),
             {error, Reason, Req}
     end;
-get_param_value("query", Name, Req) ->
+get_param_value("query", Name, Req, Param) ->
     QS = cowboy_req:parse_qs(Req),
-    Value = get_opt(to_qs(Name), QS),
+    Value = get_opt(to_qs(Name), QS, proplists:get_value("default", Param)),
     {ok, Value, Req};
-get_param_value("header", Name, Req) ->
+get_param_value("header", Name, Req, _Param) ->
     Value = cowboy_req:header(to_header(Name), Req),
     {ok, Value, Req};
-get_param_value("path", Name, Req) ->
+get_param_value("path", Name, Req, _Param) ->
     Value = cowboy_req:binding(to_binding(Name), Req),
     {ok, Value, Req}.
 
@@ -288,11 +287,6 @@ to_binary(V) when is_atom(V)    -> atom_to_binary(V, utf8);
 to_binary(V) when is_integer(V) -> integer_to_binary(V);
 to_binary(V) when is_float(V)   -> float_to_binary(V).
 
--spec get_opt(any(), []) -> any().
-
-get_opt(Key, Opts) ->
-    get_opt(Key, Opts, undefined).
-
 -spec get_opt(any(), [], any()) -> any().
 
 get_opt(Key, Opts, Default) ->
@@ -314,9 +308,3 @@ to_header(Name) -> string:lowercase(to_binary(Name)).
 to_binding(Name) ->
     Prepared = to_binary(Name),
     binary_to_atom(Prepared, utf8).
-
--spec to_method(binary()) -> atom().
-
-to_method(Method) ->
-    to_existing_atom(string:lowercase(Method)).
-
