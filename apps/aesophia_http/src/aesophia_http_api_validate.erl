@@ -1,7 +1,7 @@
 -module(aesophia_http_api_validate).
 
--export([request/4]).
--export([response/5]).
+-export([request/3]).
+-export([response/4]).
 -export([validator/0, validator/1]).
 -export([json_spec/0]).
 
@@ -23,17 +23,15 @@ validator(Json) ->
 
 -spec response(
     OperationId :: atom(),
-    Methohd :: binary(),
     Code :: 200..599,
     Response :: jesse:json_term(),
     Validator :: jesse_state:state()
     ) -> ok | no_return().
 
-response(_OperationId, _Method0, Code, _Response, _Validator) when Code >= 500 andalso Code < 600 ->
+response(_OperationId, Code, _Response, _Validator) when Code >= 500 andalso Code < 600 ->
     ok;
-response(OperationId, Method0, Code, Response, Validator) ->
-    Method = to_method(Method0),
-    #{responses := Resps} = maps:get(Method, endpoints:operation(OperationId)),
+response(OperationId, Code, Response, Validator) ->
+    #{responses := Resps} = endpoints:operation(OperationId),
     case maps:get(Code, Resps, not_found) of
         undefined -> ok;
         not_found -> throw({error, {Code, unspecified_response_code}});
@@ -53,21 +51,19 @@ response(OperationId, Method0, Code, Response, Validator) ->
 
 -spec request(
     OperationId :: atom(),
-    Methohd :: binary(),
     Req :: cowboy_req:req(),
     Validator :: jesse_state:state()
     ) ->
     {ok, Model :: map(), cowboy_req:req()}
     | {error, Reason :: any(), cowboy_req:req()}.
 
-request(OperationId, Method0, Req, Validator) ->
-    Method = to_method(Method0),
-    #{parameters := Params} = maps:get(Method, endpoints:operation(OperationId)),
+request(OperationId, Req, Validator) ->
+    #{parameters := Params} = endpoints:operation(OperationId),
     params(Params, #{}, Req, Validator).
 
 params([], Model, Req, _) -> {ok, Model, Req};
 params([Param | Params], Model, Req0, Validator) ->
-   case populate_param(Param, Req0, Validator) of
+    case populate_param(Param, Req0, Validator) of
         {ok, K, V, Req} ->
             NewModel = maps:put(to_atom(K), V, Model),
             params(Params, NewModel, Req, Validator);
@@ -314,9 +310,3 @@ to_header(Name) -> string:lowercase(to_binary(Name)).
 to_binding(Name) ->
     Prepared = to_binary(Name),
     binary_to_atom(Prepared, utf8).
-
--spec to_method(binary()) -> atom().
-
-to_method(Method) ->
-    to_existing_atom(string:lowercase(Method)).
-

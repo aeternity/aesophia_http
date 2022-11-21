@@ -35,12 +35,12 @@ handle_request_json(Req0, State = #state{ validator = Validator,
                                           operation_id = OperationId }) ->
     T0 = os:timestamp(),
     Method = cowboy_req:method(Req0),
-    try aesophia_http_api_validate:request(OperationId, Method, Req0, Validator) of
+    try aesophia_http_api_validate:request(OperationId, Req0, Validator) of
         {ok, Params, Req1} ->
             Context = #{ spec => Spec },
             {Code, Headers, Body} = handle_request(OperationId, Params, Context),
 
-            _ = aesophia_http_api_validate:response(OperationId, Method, Code, Body, Validator),
+            _ = aesophia_http_api_validate:response(OperationId, Code, Body, Validator),
 
             Req = cowboy_req:reply(Code, to_headers(Headers), jsx:encode(Body), Req1),
             T = timer:now_diff(os:timestamp(), T0),
