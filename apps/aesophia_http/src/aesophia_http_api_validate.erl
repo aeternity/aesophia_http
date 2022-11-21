@@ -16,8 +16,8 @@ json_specs() ->
 
 -spec validator() -> jesse_state:state().
 validator() ->
-    #{ swagger := Swagger } = json_specs(),
-    validator(Swagger).
+    #{ oas3 := Oas3 } = json_specs(),
+    validator(Oas3).
 
 -spec validator(jsx:json_text()) -> jesse_state:state().
 validator(Json) ->
@@ -147,10 +147,10 @@ prepare_param_({"type", "integer"}, Value, Name, _) ->
     end;
 prepare_param_({"type", "string"}, _, _, _) -> ok;
 % schema
-prepare_param_({"schema", #{<<"$ref">> := <<"/definitions/", Ref/binary>>}},
+prepare_param_({"schema", #{<<"$ref">> := <<"/components/schemas/", Ref/binary>>}},
                Value, Name, Validator) ->
     try
-        Schema = #{<<"$ref">> => <<"#/definitions/", Ref/binary>>},
+        Schema = #{<<"$ref">> => <<"#/components/schemas/", Ref/binary>>},
         jesse_schema_validator:validate_with_state(Schema, Value, Validator),
         {ok, Value, Ref}
     catch

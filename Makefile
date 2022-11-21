@@ -24,7 +24,7 @@ $(HTTP_APP)/priv/swagger.json: config/swagger.yaml
 	@mkdir -p $(HTTP_APP)/priv
 	@yq config/swagger.yaml -o json > $(HTTP_APP)/priv/swagger.json
 
-$(SWAGGER_ENDPOINTS_SPEC): config/swagger.yaml
+$(SWAGGER_ENDPOINTS_SPEC): config/oas3.yaml
 	$(REBAR) swagger_endpoints
 
 SWAGGER_UI_GIT = https://github.com/swagger-api/swagger-ui.git
