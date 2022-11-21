@@ -263,12 +263,24 @@ handle_request('ApiVersion', _Req, #{ spec := Spec }) ->
 handle_request('Api', _Req, #{ spec := Spec }) ->
     {200, [], jsx:decode(Spec, [return_maps])}.
 
+to_old_aci_item_def(C0) ->
+    #{ typedefs := Typedefs } = C0,
+    C1 = maps:remove(typedefs, C0),
+    C1#{ type_defs => Typedefs }.
+
+to_old_aci_item(#{contract := Contract}) ->
+    #{contract => to_old_aci_item_def(Contract)};
+
+to_old_aci_item(#{namespace := Namespace}) ->
+    #{namespace => to_old_aci_item_def(Namespace)}.
+
 generate_aci(Contract, Options) ->
     Opts = compile_options(Options),
     try aeso_aci:contract_interface(json, Contract, Opts) of
         {ok, JsonACI} ->
             {ok, StubACI} = aeso_aci:render_aci_json(JsonACI),
-            {ok, JsonACI, StubACI};
+            JsonACIOld = [ to_old_aci_item(T) || T <- JsonACI ],
+            {ok, JsonACIOld, StubACI};
         {error,_} = Err ->
             Err
     catch _:R:S ->
