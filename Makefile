@@ -14,7 +14,11 @@ test: swagger
 	@($(REBAR) eunit)
 	@($(REBAR) ct)
 
-swagger: $(HTTP_APP)/priv/swagger.json $(SWAGGER_ENDPOINTS_SPEC)
+swagger: $(HTTP_APP)/priv/oas3.json $(HTTP_APP)/priv/swagger.json $(SWAGGER_ENDPOINTS_SPEC)
+
+$(HTTP_APP)/priv/oas3.json: config/oas3.yaml
+	@mkdir -p $(HTTP_APP)/priv
+	@yq config/oas3.yaml -o json > $(HTTP_APP)/priv/oas3.json
 
 $(HTTP_APP)/priv/swagger.json: config/swagger.yaml
 	@mkdir -p $(HTTP_APP)/priv
@@ -29,11 +33,11 @@ SWAGGER_DOCS_DIR = $(HTTP_APP)/priv/swagger-docs
 
 swagger-docs: $(SWAGGER_DOCS_DIR)
 
-$(SWAGGER_DOCS_DIR): |$(SWAGGER_UI_GIT_DIR)/.git $(HTTP_APP)/priv/swagger.json
+$(SWAGGER_DOCS_DIR): |$(SWAGGER_UI_GIT_DIR)/.git $(HTTP_APP)/priv/oas3.json
 	@mkdir -p $(SWAGGER_DOCS_DIR)
 	@cp -p $(SWAGGER_UI_GIT_DIR)/dist/* $(SWAGGER_DOCS_DIR)
-	@cp -p $(HTTP_APP)/priv/swagger.json $(SWAGGER_DOCS_DIR)
-	@sed -ibkp 's/https:\/\/petstore.swagger.io\/v2\/swagger.json/swagger.json/g' $(SWAGGER_DOCS_DIR)/swagger-initializer.js
+	@cp -p $(HTTP_APP)/priv/oas3.json $(SWAGGER_DOCS_DIR)
+	@sed -ibkp 's/https:\/\/petstore.swagger.io\/v2\/swagger.json/oas3.json/g' $(SWAGGER_DOCS_DIR)/swagger-initializer.js
 
 $(SWAGGER_UI_GIT_DIR)/.git:
 	@git clone -n --depth 1 $(SWAGGER_UI_GIT) $(SWAGGER_UI_GIT_DIR)

@@ -3,18 +3,21 @@
 -export([request/3]).
 -export([response/4]).
 -export([validator/0, validator/1]).
--export([json_spec/0]).
+-export([json_specs/0]).
 
--spec json_spec() -> jsx:json_text().
-json_spec() ->
+-spec json_specs() -> map().
+json_specs() ->
     {ok, AppName} = application:get_application(?MODULE),
-    Filename = filename:join(code:priv_dir(AppName), "swagger.json"),
-    {ok, Json} = file:read_file(Filename),
-    Json.
+    FilenameSwagger = filename:join(code:priv_dir(AppName), "swagger.json"),
+    {ok, Swagger} = file:read_file(FilenameSwagger),
+    FilenameOas3 = filename:join(code:priv_dir(AppName), "oas3.json"),
+    {ok, Oas3} = file:read_file(FilenameOas3),
+    #{swagger => Swagger, oas3 => Oas3}.
 
 -spec validator() -> jesse_state:state().
 validator() ->
-    validator(json_spec()).
+    #{ swagger := Swagger } = json_specs(),
+    validator(Swagger).
 
 -spec validator(jsx:json_text()) -> jesse_state:state().
 validator(Json) ->
@@ -74,7 +77,7 @@ params([Param | Params], Model, Req0, Validator) ->
 populate_param(Param, Req, Validator) ->
     In = proplists:get_value("in", Param),
     Name = proplists:get_value("name", Param),
-    case get_param_value(In, Name, Req) of
+    case get_param_value(In, Name, Req, Param) of
         {ok, Value, Req1} ->
             case prepare_param(Param, Value, Name, Validator) of
                 {ok, NewName, NewValue} -> {ok, NewName, NewValue, Req1};
@@ -183,7 +186,7 @@ prepare_param_({"maximum", Max}, Value, Name, _) ->
         false -> param_error({not_in_range, Value}, Name)
     end.
 
-get_param_value("body", _, Req0) ->
+get_param_value("body", _, Req0, _Param) ->
     %% Cowboy will attempt to read up to ~5MB of data for up to 10s. The call
     %% will return when there is up to ~5MB of data or at the end of the 10s
     %% period. If there is more data to read (after reading the initial 5MB),
@@ -204,14 +207,14 @@ get_param_value("body", _, Req0) ->
             {error, Reason} = param_error({body_too_big, Body}, <<>>),
             {error, Reason, Req}
     end;
-get_param_value("query", Name, Req) ->
+get_param_value("query", Name, Req, Param) ->
     QS = cowboy_req:parse_qs(Req),
-    Value = get_opt(to_qs(Name), QS),
+    Value = get_opt(to_qs(Name), QS, proplists:get_value("default", Param)),
     {ok, Value, Req};
-get_param_value("header", Name, Req) ->
+get_param_value("header", Name, Req, _Param) ->
     Value = cowboy_req:header(to_header(Name), Req),
     {ok, Value, Req};
-get_param_value("path", Name, Req) ->
+get_param_value("path", Name, Req, _Param) ->
     Value = cowboy_req:binding(to_binding(Name), Req),
     {ok, Value, Req}.
 
@@ -283,11 +286,6 @@ to_binary(V) when is_list(V)    -> iolist_to_binary(V);
 to_binary(V) when is_atom(V)    -> atom_to_binary(V, utf8);
 to_binary(V) when is_integer(V) -> integer_to_binary(V);
 to_binary(V) when is_float(V)   -> float_to_binary(V).
-
--spec get_opt(any(), []) -> any().
-
-get_opt(Key, Opts) ->
-    get_opt(Key, Opts, undefined).
 
 -spec get_opt(any(), [], any()) -> any().
 

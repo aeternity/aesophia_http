@@ -327,6 +327,12 @@ paths:
       description: 'Get the Api description'
       produces:
         - application/json
+      parameters:
+        - in: query
+          name: oas3
+          description: 'Get OpenApi3 instead of Swagger'
+          default: false
+          type: boolean
       responses:
         '200':
           description: 'API description'

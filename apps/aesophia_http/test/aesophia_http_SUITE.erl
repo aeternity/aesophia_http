@@ -29,7 +29,8 @@
         , decode_call_result_bytecode/1
         , decode_call_result_bytecode_not_ok/1
         , validate_byte_code/1
-        , get_api/1
+        , get_api_swagger/1
+        , get_api_oas3/1
         , get_api_version/1
         , get_version/1
         , compiler_version/1
@@ -63,7 +64,8 @@ groups() ->
       , decode_call_result_bytecode_not_ok
       ]},
      {admin, [],
-      [ get_api
+      [ get_api_swagger
+      , get_api_oas3
       , get_api_version
       , get_version
       , compiler_version
@@ -386,9 +388,12 @@ get_version(_Config) ->
 
     ok.
 
-get_api(_Config) ->
-    {ok, 200, #{<<"swagger">> := _Swagger}} = get_api(),
+get_api_swagger(_Config) ->
+    {ok, 200, #{<<"swagger">> := _Swagger}} = get_api([]),
+    ok.
 
+get_api_oas3(_Config) ->
+    {ok, 200, #{<<"openapi">> := _OpenApi}} = get_api([{"oas3", "true"}]),
     ok.
 
 %% Contract interface functions.
@@ -524,9 +529,9 @@ get_version() ->
     Host = internal_address(),
     http_request(Host, get, "version", []).
 
-get_api() ->
+get_api(Params) ->
     Host = internal_address(),
-    http_request(Host, get, "api", []).
+    http_request(Host, get, "api", Params).
 
 %% ============================================================
 %% private functions
@@ -538,7 +543,7 @@ internal_address() ->
 
 http_request(Host, get, Path, Params) ->
     URL = binary_to_list(
-            iolist_to_binary([Host, "/", Path, encode_get_params(Params)])),
+            iolist_to_binary([Host, "/", Path, "?", uri_string:compose_query(Params)])),
     ct:log("GET ~p", [URL]),
     R = httpc_request(get, {URL, []}, [], []),
     process_http_return(R);
@@ -565,25 +570,6 @@ httpc_request(Method, Request, HTTPOptions, Options, Profile) ->
     Response = httpc:request(Method, Request, HTTPOptions, Options, Pid),
     ok = gen_server:stop(Pid, normal, infinity),
     Response.
-
-encode_get_params(#{} = Ps) ->
-    encode_get_params(maps:to_list(Ps));
-encode_get_params([{K,V}|T]) ->
-    ["?", [str(K),"=",uenc(V)
-           | [["&", str(K1), "=", uenc(V1)]
-              || {K1, V1} <- T]]];
-encode_get_params([]) ->
-    [].
-
-str(A) when is_atom(A) ->
-    str(atom_to_binary(A, utf8));
-str(S) when is_list(S); is_binary(S) ->
-    S.
-
-uenc(I) when is_integer(I) ->
-    uenc(integer_to_list(I));
-uenc(V) ->
-    http_uri:quote(V).
 
 process_http_return(R) ->
     case R of
