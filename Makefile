@@ -58,6 +58,9 @@ docker:
 	@docker pull aeternity/builder
 	@docker build -t aeternity/aesophia_http:local .
 
+get-deps:
+	@($(REBAR) get-deps)
+
 prod-build: swagger
 	@($(REBAR) as prod release)
 
