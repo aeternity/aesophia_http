@@ -294,7 +294,8 @@ compile_contract(Contract, Options) ->
     try aeso_compiler:from_string(binary_to_list(Contract), [{aci, json} | Opts]) of
         {ok, Map} ->
             #{ aci := Aci } = Map,
-            {ok, aeser_contract_code:serialize(Map), Aci};
+            {ok, SourceHash} = eblake2:blake2b(32, Contract),
+            {ok, aeser_contract_code:serialize(Map#{ source_hash => SourceHash }), Aci};
         Err = {error, _} ->
             Err
     catch _:R:S ->
