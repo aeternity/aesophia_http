@@ -9,6 +9,7 @@
     inets,
     eblake2,
     aeserialization,
+    enacl,
     jsx,
     jesse,
     cowboy,
