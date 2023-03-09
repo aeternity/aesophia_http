@@ -59,7 +59,8 @@ jobs:
           name: Build and push Docker image to DockerHub
           command: |
             docker login -u $DOCKER_USER -p $DOCKER_PASS
-            docker buildx create --use
+            docker context create aeternity
+            docker buildx create aeternity --use
             docker buildx build --platform=linux/amd64,linux/arm64 --push -t ${DOCKERHUB_REPO:?}:${CIRCLE_TAG:?} -t ${DOCKERHUB_REPO:?}:latest .
 
   docker_push_branch:
@@ -74,7 +75,8 @@ jobs:
           name: Build and push Docker image to DockerHub
           command: |
             docker login -u $DOCKER_USER -p $DOCKER_PASS
-            docker buildx create --use
+            docker context create aeternity
+            docker buildx create aeternity --use
             docker buildx build --platform=linux/amd64,linux/arm64 --push -t ${DOCKERHUB_REPO:?}:${CIRCLE_BRANCH:?} .
 
 workflows:
@@ -88,9 +90,6 @@ workflows:
               only: /^v.*$/
       - docker_push_branch:
           context: ae-dockerhub
-          requires:
-            - build
-            - verify_rebar_lock
       - docker_push_tag:
           context: ae-dockerhub
           requires:
