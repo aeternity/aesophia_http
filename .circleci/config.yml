@@ -63,22 +63,6 @@ jobs:
             docker buildx create aeternity --use
             docker buildx build --platform=linux/amd64,linux/arm64 --push -t ${DOCKERHUB_REPO:?}:${CIRCLE_TAG:?} -t ${DOCKERHUB_REPO:?}:latest .
 
-  docker_push_branch:
-    executor: docker_builder
-    environment:
-      DOCKERHUB_REPO: aeternity/aesophia_http
-    steps:
-      - checkout
-      - setup_remote_docker:
-          docker_layer_caching: true
-      - run:
-          name: Build and push Docker image to DockerHub
-          command: |
-            docker login -u $DOCKER_USER -p $DOCKER_PASS
-            docker context create aeternity
-            docker buildx create aeternity --use
-            docker buildx build --platform=linux/amd64,linux/arm64 --push -t ${DOCKERHUB_REPO:?}:${CIRCLE_BRANCH:?} .
-
 workflows:
   version: 2
   build_push:
@@ -88,8 +72,6 @@ workflows:
           filters:
             tags:
               only: /^v.*$/
-      - docker_push_branch:
-          context: ae-dockerhub
       - docker_push_tag:
           context: ae-dockerhub
           requires:
