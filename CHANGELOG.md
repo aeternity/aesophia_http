@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
+## [7.3.0]
+### Changed
+- Switched to building multiplatform docker images
+
 ## [7.2.0]
 ### Changed
 - Updated to [Sophia 7.1.0](https://github.com/aeternity/aesophia/blob/master/CHANGELOG.md#710)
@@ -150,7 +154,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial HTTP interface: /aci, /compile, /decode-data, /encode-calldata, /version, /api-version, /api
 - Docker support (aeternity/aesophia_http)
 
-[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v7.2.0...HEAD
+[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v7.3.0...HEAD
+[7.2.0]: https://github.com/aeternity/aesophia_http/compare/v7.2.0...v7.3.0
 [7.2.0]: https://github.com/aeternity/aesophia_http/compare/v7.1.1...v7.2.0
 [7.1.1]: https://github.com/aeternity/aesophia_http/compare/v7.1.0...v7.1.1
 [7.1.0]: https://github.com/aeternity/aesophia_http/compare/v7.0.1...v7.1.0
