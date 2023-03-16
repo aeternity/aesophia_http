@@ -8,7 +8,7 @@ executors:
     working_directory: ~/src
   docker_builder:
     docker:
-      - image: circleci/buildpack-deps:bionic
+      - image: cimg/base:2023.03-22.04
 
 jobs:
   verify_rebar_lock:
@@ -59,9 +59,9 @@ jobs:
           name: Build and push Docker image to DockerHub
           command: |
             docker login -u $DOCKER_USER -p $DOCKER_PASS
-            docker build -t ${DOCKERHUB_REPO:?}:${CIRCLE_TAG:?} -t ${DOCKERHUB_REPO:?}:latest .
-            docker push ${DOCKERHUB_REPO:?}:${CIRCLE_TAG:?}
-            docker push ${DOCKERHUB_REPO:?}:latest
+            docker context create aeternity
+            docker buildx create aeternity --use
+            docker buildx build --platform=linux/amd64,linux/arm64 --push -t ${DOCKERHUB_REPO:?}:${CIRCLE_TAG:?} -t ${DOCKERHUB_REPO:?}:latest .
 
 workflows:
   version: 2
