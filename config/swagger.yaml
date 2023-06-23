@@ -412,19 +412,9 @@ definitions:
       - line
       - col
   ACI:
-    type: object
-    properties:
-      encoded_aci:
-        type: object
-      external_encoded_aci:
-        type: array
-        items:
-          type: object
-      interface:
-        type: string
-    required:
-      - encoded_aci
-      - interface
+    type: array
+    items:
+      type: object
   API:
     description: 'Swagger API description'
     type: object
@@ -434,9 +424,7 @@ definitions:
       bytecode:
         $ref: '#/definitions/EncodedByteArray'
       aci:
-        type: array
-        items:
-          type: object
+        $ref: '#/definitions/ACI'
     required:
       - bytecode
       - aci

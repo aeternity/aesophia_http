@@ -106,13 +106,9 @@ identity_contract(_Config) ->
     ok.
 
 identity_aci(_Config) ->
-    #{<<"encoded_aci">> := ACI, <<"external_encoded_aci">> := ExternalACI, <<"interface">> := Prototype} =
-        create_aci("identity"),
-    ?assertMatch(<<"main contract Identity =\n"
-                   "  entrypoint main_ : (int) => int\n">>, Prototype),
+    ACI = create_aci("identity"),
 
-    ?assertMatch(#{<<"contract">> := _C}, ACI),
-    ?assertMatch([], ExternalACI),
+    ?assertMatch([#{<<"contract">> := _C}], ACI),
 
     ok.
 
@@ -424,7 +420,7 @@ create_aci(Dir, Name) ->
 create_aci(Dir, Name, Opts) ->
     FileName = filename:join(Dir, Name ++ ".aes"),
     {ok, SophiaCode} = file:read_file(FileName),
-    {ok, 200, ACI = #{}} = get_aci(SophiaCode, Opts),
+    {ok, 200, ACI} = get_aci(SophiaCode, Opts),
     ACI.
 
 
