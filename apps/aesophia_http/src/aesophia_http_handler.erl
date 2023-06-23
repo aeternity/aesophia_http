@@ -277,7 +277,7 @@ to_old_aci_item(#{namespace := Namespace}) ->
 
 generate_aci(Contract, Options) ->
     Opts = compile_options(Options),
-    try aeso_aci:contract_interface(json, Contract, Opts) of
+    try aeso_aci:contract_interface(json, Contract, Opts ++ [{no_code, true}]) of
         {ok, JsonACI} ->
             {ok, StubACI} = aeso_aci:render_aci_json(JsonACI),
             JsonACIOld = [ to_old_aci_item(T) || T <- JsonACI ],
