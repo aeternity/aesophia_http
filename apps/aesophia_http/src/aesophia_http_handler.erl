@@ -175,13 +175,8 @@ handle_request('GenerateACI', Req, _Context) ->
               #{ <<"code">> := Code } = Json } ->
             Options = maps:get(<<"options">>, Json, #{}),
             case generate_aci(Code, Options) of
-                 {ok, JsonACI = [_ | _], StringACI} ->
-                     {200, [],
-                      #{encoded_aci => lists:last(JsonACI),
-                        external_encoded_aci => lists:droplast(JsonACI),
-                        interface   => StringACI}};
-                 {ok, [], _} ->
-                     {400, [], mk_error_msg(<<"ACI generator returned an empty result">>)};
+                 {ok, JsonACI = [_ | _]} ->
+                     {200, [], JsonACI};
                  {error, Errors} when is_list(Errors) ->
                      {400, [], mk_errors(Errors)};
                  {error, Msg} when is_binary(Msg) ->
@@ -264,24 +259,11 @@ handle_request('ApiVersion', _Req, #{ spec := Spec }) ->
 handle_request('Api', _Req, #{ spec := Spec }) ->
     {200, [], jsx:decode(Spec, [return_maps])}.
 
-to_old_aci_item_def(C0) ->
-    #{ typedefs := Typedefs } = C0,
-    C1 = maps:remove(typedefs, C0),
-    C1#{ type_defs => Typedefs }.
-
-to_old_aci_item(#{contract := Contract}) ->
-    #{contract => to_old_aci_item_def(Contract)};
-
-to_old_aci_item(#{namespace := Namespace}) ->
-    #{namespace => to_old_aci_item_def(Namespace)}.
-
 generate_aci(Contract, Options) ->
     Opts = compile_options(Options),
-    try aeso_aci:contract_interface(json, Contract, Opts) of
+    try aeso_aci:contract_interface(json, Contract, Opts ++ [{no_code, true}]) of
         {ok, JsonACI} ->
-            {ok, StubACI} = aeso_aci:render_aci_json(JsonACI),
-            JsonACIOld = [ to_old_aci_item(T) || T <- JsonACI ],
-            {ok, JsonACIOld, StubACI};
+            {ok, JsonACI};
         {error,_} = Err ->
             Err
     catch _:R:S ->
