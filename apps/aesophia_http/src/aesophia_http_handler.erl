@@ -70,13 +70,13 @@ handle_request('CompileContract', Req, _Context) ->
               #{ <<"code">> := Code } = Json } ->
             Options = maps:get(<<"options">>, Json, #{}),
             case compile_contract(Code, Options) of
-                 {ok, ByteCode, Aci} ->
-                     ByteCodeEncoded = aeser_api_encoder:encode(contract_bytearray, ByteCode),
-                     {200, [], #{bytecode => ByteCodeEncoded, aci => Aci}};
-                 {error, Errors} when is_list(Errors) ->
-                     {400, [], mk_errors(Errors)};
-                 {error, Msg} when is_binary(Msg) ->
-                     {400, [], mk_error_msg(Msg)}
+                {ok, ByteCode, Aci} ->
+                    ByteCodeEncoded = aeser_api_encoder:encode(contract_bytearray, ByteCode),
+                    {200, [], #{bytecode => ByteCodeEncoded, aci => Aci}};
+                {error, Errors} when is_list(Errors) ->
+                    {400, [], mk_errors(Errors)};
+                {error, Msg} when is_binary(Msg) ->
+                    {400, [], mk_error_msg(Msg)}
              end;
         _ -> {400, [], bad_request()}
     end;
