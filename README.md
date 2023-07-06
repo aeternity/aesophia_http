@@ -104,7 +104,7 @@ other contracts.
 We can now compile the contract and get the bytecode:
 
 ```
-url -H "Content-Type: application/json" -d "{\"code\":\"$contract\", \"options\":{}}" -X POST http://localhost:3080/compile
+curl -H "Content-Type: application/json" -d "{\"code\":\"$contract\", \"options\":{}}" -X POST http://localhost:3080/compile
 ```
 Returns:
 ```
