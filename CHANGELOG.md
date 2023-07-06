@@ -6,10 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+### Changed
+### Removed
+
+## [7.4.0]
+### Added
 - GenerateACI accepts contract interface again
 ### Changed
+- Updated to [Sophia 7.2.1](https://github.com/aeternity/aesophia/blob/master/CHANGELOG.md#721)
 - GenerateACI returns ACI formatted the same way as in aesophia\_cli
-### Removed
+- Increased `idle_timeout` to 10 minutes to allow slow compilations to succeed
 
 ## [7.3.0]
 ### Changed
@@ -156,8 +162,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial HTTP interface: /aci, /compile, /decode-data, /encode-calldata, /version, /api-version, /api
 - Docker support (aeternity/aesophia_http)
 
-[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v7.3.0...HEAD
-[7.2.0]: https://github.com/aeternity/aesophia_http/compare/v7.2.0...v7.3.0
+[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v7.4.0...HEAD
+[7.4.0]: https://github.com/aeternity/aesophia_http/compare/v7.3.0...v7.4.0
+[7.3.0]: https://github.com/aeternity/aesophia_http/compare/v7.2.0...v7.3.0
 [7.2.0]: https://github.com/aeternity/aesophia_http/compare/v7.1.1...v7.2.0
 [7.1.1]: https://github.com/aeternity/aesophia_http/compare/v7.1.0...v7.1.1
 [7.1.0]: https://github.com/aeternity/aesophia_http/compare/v7.0.1...v7.1.0
