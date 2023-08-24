@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
+## [7.5.0]
+### Changed
+- Updated to [Sophia 7.3.0](https://github.com/aeternity/aesophia/blob/master/CHANGELOG.md#730)
+- Aligned HTTP API version with HTTP Compiler version (7.5.0) - Sophia compiler version is 7.3.0
+
 ## [7.4.0]
 ### Added
 - GenerateACI accepts contract interface again
@@ -162,7 +167,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial HTTP interface: /aci, /compile, /decode-data, /encode-calldata, /version, /api-version, /api
 - Docker support (aeternity/aesophia_http)
 
-[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v7.4.0...HEAD
+[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v7.5.0...HEAD
+[7.5.0]: https://github.com/aeternity/aesophia_http/compare/v7.4.0...v7.5.0
 [7.4.0]: https://github.com/aeternity/aesophia_http/compare/v7.3.0...v7.4.0
 [7.3.0]: https://github.com/aeternity/aesophia_http/compare/v7.2.0...v7.3.0
 [7.2.0]: https://github.com/aeternity/aesophia_http/compare/v7.1.1...v7.2.0
