@@ -362,8 +362,8 @@ fate_assembler(_) ->
     C = <<"cb_+GZGA6CpNW171TSUfk88PoVv7YslUgxRcOJYKFPRxoGkXArWosC4OZ7+RNZEHwA3ADcAGg6CPwEDP/64F37sADcBBwcBAQCWLwIRRNZEHxFpbml0EbgXfuwRbWFpboIvAIU0LjEuMAANEx2r">>,
     _Res = do_get_fate_assembler(C).
 
--define(API_VERSION,      <<"7.5.0">>).
--define(COMPILER_VERSION, <<"7.3.0">>).
+-define(API_VERSION,      <<"7.6.0">>).
+-define(COMPILER_VERSION, <<"7.4.0">>).
 
 compiler_version(_) ->
     F = fun({ExpVer, CB}) ->
