@@ -70,9 +70,9 @@ handle_request('CompileContract', Req, _Context) ->
               #{ <<"code">> := Code } = Json } ->
             Options = maps:get(<<"options">>, Json, #{}),
             case compile_contract(Code, Options) of
-                {ok, ByteCode, Aci} ->
+                {ok, ByteCode, Aci, Warnings} ->
                     ByteCodeEncoded = aeser_api_encoder:encode(contract_bytearray, ByteCode),
-                    {200, [], #{bytecode => ByteCodeEncoded, aci => Aci}};
+                    {200, [], #{bytecode => ByteCodeEncoded, aci => Aci, warnings => mk_warnings(Warnings)}};
                 {error, Errors} when is_list(Errors) ->
                     {400, [], mk_errors(Errors)};
                 {error, Msg} when is_binary(Msg) ->
@@ -272,12 +272,12 @@ generate_aci(Contract, Options) ->
     end.
 
 compile_contract(Contract, Options) ->
-    Opts = compile_options(Options),
+    Opts = compile_options(Options) ++ [warn_all],
     try aeso_compiler:from_string(binary_to_list(Contract), [{aci, json} | Opts]) of
         {ok, Map} ->
-            #{ aci := Aci } = Map,
+            #{ aci := Aci, warnings := Warnings } = Map,
             {ok, SourceHash} = eblake2:blake2b(32, Contract),
-            {ok, aeser_contract_code:serialize(Map#{ source_hash => SourceHash }), Aci};
+            {ok, aeser_contract_code:serialize(Map#{ source_hash => SourceHash }), Aci, Warnings};
         Err = {error, _} ->
             Err
     catch _:R:S ->
@@ -436,6 +436,8 @@ fate_to_json({variant, _Ar, Tag, Args}) -> jo(variant, [Tag | [fate_to_json(Arg)
 fate_to_json(_Data) -> throw({cannot_translate_to_json, _Data}).
 
 mk_errors(Errors) -> [ aeso_errors:to_json(E) || E <- Errors ].
+
+mk_warnings(Warnings) -> mk_errors([ aeso_warnings:warn_to_err(type_error, W) || W <- Warnings ]).
 
 bad_request() ->
     #{reason => <<"Bad request">>}.
