@@ -31,9 +31,8 @@ validator(Json) ->
 
 response(_OperationId, _Method0, Code, _Response, _Validator) when Code >= 500 andalso Code < 600 ->
     ok;
-response(OperationId, Method0, Code, Response, Validator) ->
-    Method = to_method(Method0),
-    #{responses := Resps} = maps:get(Method, endpoints:operation(OperationId)),
+response(OperationId, _Method0, Code, Response, Validator) ->
+    #{responses := Resps} = endpoints:operation(OperationId),
     case maps:get(Code, Resps, not_found) of
         undefined -> ok;
         not_found -> throw({error, {Code, unspecified_response_code}});
@@ -61,8 +60,8 @@ response(OperationId, Method0, Code, Response, Validator) ->
     | {error, Reason :: any(), cowboy_req:req()}.
 
 request(OperationId, Method0, Req, Validator) ->
-    Method = to_method(Method0),
-    #{parameters := Params} = maps:get(Method, endpoints:operation(OperationId)),
+    #{parameters := Params, method := Method1 } = endpoints:operation(OperationId),
+    true = to_method(Method0) == to_method(Method1),
     params(Params, #{}, Req, Validator).
 
 params([], Model, Req, _) -> {ok, Model, Req};
