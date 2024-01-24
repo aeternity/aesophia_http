@@ -314,7 +314,7 @@ to_binding(Name) ->
     Prepared = to_binary(Name),
     binary_to_atom(Prepared, utf8).
 
--spec to_method(binary()) -> atom().
+-spec to_method(unicode:chardata()) -> atom().
 
 to_method(Method) ->
     to_existing_atom(string:lowercase(Method)).
