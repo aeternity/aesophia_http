@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
+## [7.6.1]
+### Changed
+- Updated to [Sophia 7.4.1](https://github.com/aeternity/aesophia/blob/master/CHANGELOG.md#741)
+- Updated `aeserialization` to [v1.1.0](https://github.com/aeternity/aeserialization/releases/tag/v1.1.0)
+  and `aebytecode` to [v3.4.0](https://github.com/aeternity/aebytecode/releases/tag/v3.4.0)
+
 ## [7.6.0]
 ### Changed
 - Updated to [Sophia 7.4.0](https://github.com/aeternity/aesophia/blob/master/CHANGELOG.md#740)
@@ -171,7 +177,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial HTTP interface: /aci, /compile, /decode-data, /encode-calldata, /version, /api-version, /api
 - Docker support (aeternity/aesophia_http)
 
-[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v7.6.0...HEAD
+[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v7.6.1...HEAD
+[7.6.1]: https://github.com/aeternity/aesophia_http/compare/v7.6.0...v7.6.1
 [7.6.0]: https://github.com/aeternity/aesophia_http/compare/v7.5.0...v7.6.0
 [7.5.0]: https://github.com/aeternity/aesophia_http/compare/v7.4.0...v7.5.0
 [7.4.0]: https://github.com/aeternity/aesophia_http/compare/v7.3.0...v7.4.0
