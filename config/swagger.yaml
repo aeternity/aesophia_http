@@ -425,9 +425,12 @@ definitions:
         $ref: '#/definitions/EncodedByteArray'
       aci:
         $ref: '#/definitions/ACI'
+      warnings:
+        $ref: '#/definitions/CompilerErrors'
     required:
       - bytecode
       - aci
+      - warnings
   SophiaCallResultInput:
     type: object
     properties:
