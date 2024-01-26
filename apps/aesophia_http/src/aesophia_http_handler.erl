@@ -56,10 +56,12 @@ handle_request_json(Req0, State = #state{ validator = Validator,
             end,
             {stop, Req, State};
         {error, Reason, Req1} ->
+            logger:info("Request validation failed: ~p", [Reason]),
             Body = jsx:encode(to_error(Reason)),
             Req = cowboy_req:reply(400, #{}, Body, Req1),
             {stop, Req, State}
-    catch error:_Error ->
+    catch error:_Error:_St ->
+            logger:info("Request validation failed: ~p", [{_Error, _St}]),
             Body = jsx:encode(to_error({validation_error, <<>>, <<>>})),
             {stop, cowboy_req:reply(400, #{}, Body, Req0), State}
     end.
