@@ -4,5 +4,4 @@
 
 EXTERNAL_ADDRESS=${EXTERNAL_ADDRESS:-localhost:3080}
 
-curl -s -f -S -o /dev/null --retry 6 http://${EXTERNAL_ADDRESS}/version || exit 1
-
+curl -s -f -S -o /dev/null http://${EXTERNAL_ADDRESS}/version || exit 1

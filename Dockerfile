@@ -37,5 +37,4 @@ COPY ./docker/entrypoint.sh /docker-entrypoint.sh
 COPY ./docker/healthcheck.sh /healthcheck.sh
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
-HEALTHCHECK --timeout=3s CMD /healthcheck.sh
-
+HEALTHCHECK --start-period=5s --start-interval=1s --timeout=3s --retries=6 CMD /healthcheck.sh
