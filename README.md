@@ -235,3 +235,5 @@ curl http://localhost:3080/api
 
 {"basePath":"/","definitions":{  ... },"info":{ ... },"paths":{ ... },"schemes":["http"],"swagger":"2.0"}
 ```
+
+Note that in a future release the swagger specification will be replaced by an OpenAPI 3.0 specification.

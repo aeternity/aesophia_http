@@ -1,11 +1,11 @@
 swagger: '2.0'
 info:
-  description: 'This is the [Aeternity](https://www.aeternity.com/) compiler API.'
+  description: 'This is the [Aeternity](https://www.aeternity.com/) compiler API. The swagger version of this API will be deprecated and replaced by an openAPI 3.x specification'
   version: 8.0.0-rc1
   title: Aeternity compiler
   termsOfService: 'https://www.aeternity.com/terms/'
   contact:
-    email: apiteam@aeternity.com
+    url: 'https://github.com/aeternity/aesophia_http/issues'
 basePath: /
 paths:
   /aci:
