@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Aeternity compiler
   description: This is the [Aeternity](https://www.aeternity.com/) compiler API.
-  version: 8.0.0-rc
+  version: 8.0.0
   termsOfService: https://www.aeternity.com/terms/
   contact:
     email: https://github.com/aeternity/aesophia_http/issues
