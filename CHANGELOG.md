@@ -10,11 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 ### Removed
 
-## [8.0.0-rc1]
+## [8.0.0]
 ### Added
 - Expose compiler warnings
 ### Changed
-- Updated to [Sophia 8.0.0-rc1](https://github.com/aeternity/aesophia/blob/master/CHANGELOG.md#800-rc1)
+- Updated to [Sophia 8.0.0](https://github.com/aeternity/aesophia/blob/master/CHANGELOG.md#800)
 
 ## [7.6.1]
 ### Changed
@@ -184,8 +184,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial HTTP interface: /aci, /compile, /decode-data, /encode-calldata, /version, /api-version, /api
 - Docker support (aeternity/aesophia_http)
 
-[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v8.0.0-rc1...HEAD
-[8.0.0-rc1]: https://github.com/aeternity/aesophia_http/compare/v7.6.1...v8.0.0-rc1
+[Unreleased]: https://github.com/aeternity/aesophia_http/compare/v8.0.0...HEAD
+[8.0.0]: https://github.com/aeternity/aesophia_http/compare/v7.6.1...v8.0.0
 [7.6.1]: https://github.com/aeternity/aesophia_http/compare/v7.6.0...v7.6.1
 [7.6.0]: https://github.com/aeternity/aesophia_http/compare/v7.5.0...v7.6.0
 [7.5.0]: https://github.com/aeternity/aesophia_http/compare/v7.4.0...v7.5.0

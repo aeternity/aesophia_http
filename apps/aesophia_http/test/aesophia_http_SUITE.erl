@@ -244,13 +244,11 @@ decode_calldata_source(_Config) ->
     Results = maps:map(DoDec, Datas),
 
     Expects =
-        #{ <<"a">> => [#{<<"type">> => #{<<"tuple">> => [<<"int">>,<<"bool">>,<<"string">>, #{<<"tuple">> => []}]},
+        #{ <<"a">> => [#{<<"type">> => #{<<"tuple">> => [<<"int">>,<<"bool">>,<<"string">>, <<"unit">>]},
                          <<"value">> => [42,true,<<"Hello">>,[]]}]
          , <<"b">> => [#{<<"type">> => #{<<"tuple">> => [#{<<"Test.d">> => [<<"int">>]}, #{<<"Test.d">> => [<<"int">>]}]},
                          <<"value">> => [#{<<"One">> => [12,18]},<<"Two">>]}]
-         , <<"c">> => [#{<<"type">> => #{<<"record">> => [#{<<"name">> => <<"x">>,<<"type">> => <<"int">>},
-                                                          #{<<"name">> => <<"y">>,<<"type">> => <<"string">>},
-                                                          #{<<"name">> => <<"z">>, <<"type">> => #{<<"map">> => [<<"int">>,<<"int">>]}}]},
+         , <<"c">> => [#{<<"type">> => <<"Test.r">>,
                          <<"value">> => #{<<"x">> => 43,<<"y">> => <<"Foo">>, <<"z">> => [[1,2]]}}]
          , <<"d">> => [#{<<"type">> => #{<<"tuple">> => [#{<<"bytes">> => 2}, #{<<"bytes">> => 14}, #{<<"bytes">> => 32}, #{<<"bytes">> => 65}]},
                          <<"value">> => [<<"#0001">>,<<"#000102030405060708090a0b0c0d">>, <<"#000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f">>,
@@ -362,8 +360,8 @@ fate_assembler(_) ->
     C = <<"cb_+GZGA6CpNW171TSUfk88PoVv7YslUgxRcOJYKFPRxoGkXArWosC4OZ7+RNZEHwA3ADcAGg6CPwEDP/64F37sADcBBwcBAQCWLwIRRNZEHxFpbml0EbgXfuwRbWFpboIvAIU0LjEuMAANEx2r">>,
     _Res = do_get_fate_assembler(C).
 
--define(API_VERSION,      <<"8.0.0-rc1">>).
--define(COMPILER_VERSION, <<"8.0.0-rc1">>).
+-define(API_VERSION,      <<"8.0.0">>).
+-define(COMPILER_VERSION, <<"8.0.0">>).
 
 compiler_version(_) ->
     F = fun({ExpVer, CB}) ->
